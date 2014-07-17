@@ -15,7 +15,7 @@ int main(int argc, char **argv)
 	int cfd[2];
 	struct stat sb[2];
 	int64_t *c[2];
-	int i;
+	int i, nrows;
 
 	cfd[0] = open("day16265.tim.bin", O_RDONLY);
 	fstat(cfd[0], &sb[0]);
@@ -25,13 +25,15 @@ int main(int argc, char **argv)
 
 	assert(sb[0].st_size == sb[1].st_size);
 
+	nrows = sb[0].st_size/sizeof(int64_t);
+
 	c[0] = mmap(NULL, sb[0].st_size, PROT_READ, MAP_SHARED, cfd[0], 0);
 	close(cfd[0]);
 
 	c[1] = mmap(NULL, sb[1].st_size, PROT_READ, MAP_SHARED, cfd[1], 0);
 	close(cfd[1]);
 
-	for (i=0; i<sb[0].st_size/sizeof(long long int); i++) {
+	for (i=0; i<nrows; i++) {
 		int64_t nc[2];
 
 		nc[0] = be64toh(c[0][i]);
