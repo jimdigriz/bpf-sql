@@ -9,13 +9,53 @@
 #include <assert.h>
 #include <endian.h>
 #include <sysexits.h>
+#include "bpf.h"
+
+struct bpf_insn bpf_insns[] = {
+	{
+		.code	= BPF_RET+BPF_K,
+		.jt	= 0,
+		.jf	= 0,
+		.k	= -1,
+	}
+};
+
+struct bpf_program bpf_prog = {
+	.bf_len		= sizeof(bpf_insns)/sizeof(struct bpf_insn),
+	.bf_insns	= bpf_insns,
+};
+
+int run(const struct bpf_program *prog, const int columns, const int64_t *p, int64_t *m)
+{
+	int64_t a = 0, x = 0;
+	int cycles, pc = 0;
+
+	for (cycles = 0; cycles < 10 && pc < bpf_prog.bf_len; cycles++) {
+		struct bpf_insn *insn = &bpf_insns[pc];
+
+		switch (insn->code) {
+		case BPF_RET:
+			m[0] = p[0];
+			m[1] = p[1];
+			return insn->k;
+		default:
+			printf("moo default\n");
+			break;
+		}
+
+		pc++;
+	}
+
+	return 0;
+}
+
 
 int main(int argc, char **argv)
 {
 	int cfd[2];
 	struct stat sb[2];
 	int64_t *c[2];
-	int i, nrows;
+	int r, nrows;
 
 	cfd[0] = open("day16265.tim.bin", O_RDONLY);
 	fstat(cfd[0], &sb[0]);
@@ -33,13 +73,16 @@ int main(int argc, char **argv)
 	c[1] = mmap(NULL, sb[1].st_size, PROT_READ, MAP_SHARED, cfd[1], 0);
 	close(cfd[1]);
 
-	for (i=0; i<nrows; i++) {
-		int64_t nc[2];
+	for (r=0; r<nrows; r++) {
+		int64_t p[2] = {0};
+		int64_t m[2] = {0};
 
-		nc[0] = be64toh(c[0][i]);
-		nc[1] = be64toh(c[1][i]);
+		p[0] = be64toh(c[0][r]);
+		p[1] = be64toh(c[1][r]);
 
-		printf("%" PRId64 "\t%" PRId64 "\n", nc[0], nc[1]);
+		if (run(&bpf_prog, 2, p, m)) {
+			printf("%" PRId64 "\t%" PRId64 "\n", m[0], m[1]);
+		}
 	}
 
 	munmap(c[0], sb[0].st_size);
