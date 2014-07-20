@@ -22,7 +22,7 @@ Break out each field and convert it to network ordered (big-endian) 64bit signed
 
 # Engine
 
-The engine closely resembles the BPF filtering engine described in the BSD BPF manpage](http://www.freebsd.org/cgi/man.cgi?bpf(4)) which is closely modelled after the [Steven McCanne's and Van Jacobson's BPF paper](http://usenix.org/publications/library/proceedings/sd93/mccanne.pdf).
+The engine closely resembles the BPF filtering engine described in the [BSD BPF manpage](http://www.freebsd.org/cgi/man.cgi?bpf(4)) which is closely modelled after the [Steven McCanne's and Van Jacobson's BPF paper](http://usenix.org/publications/library/proceedings/sd93/mccanne.pdf).
 
     Element          Description
     
@@ -35,9 +35,10 @@ The engine closely resembles the BPF filtering engine described in the BSD BPF m
                      have the current row record data (akin to BPF's P[])
     R[]              RCOL x 64bit wide registers to create/replace records
 
-New load/store destination `BPF_REC` (record)
+Addition of a new load/store destination `BPF_REC` (record) that provides:
 
     BPF_LD+BPF_REC   A <- R[k]
     BPF_LDX+BPF_REC  X <- R[k]
+    
     BPF_ST+BPF_REC   R[k] <- A
     BPF_STX+BPF_REC  R[k] <- X
