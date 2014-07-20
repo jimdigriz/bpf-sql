@@ -3,7 +3,7 @@ struct bpf_insn bpf_insns[] = {
 		.code	= BPF_RET+BPF_K,
 		.jt	= 0,
 		.jf	= 0,
-		.k	= 0,
+		.k	= 2,
 	}
 };
 

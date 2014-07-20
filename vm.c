@@ -11,66 +11,82 @@
 #include <sysexits.h>
 #include <error.h>
 #include <uthash.h>
+#include <stdlib.h>
 #include "bpf.h"
 
 #include "bpf-program.h"
 
-#define MAX_CYCLES_PER_RECORD	10
-
 typedef struct {
 	int64_t	tim;
-	int64_t	count;
-	
-	UT_hash_handle hh;
-} results_key_t;
+	int64_t	tv2nspid;
+} record_key_t;
 
 typedef struct {
-	int	sum;
-	int	count;
-	
-	UT_hash_handle hh;
-} results_value_t;
+	record_key_t	key;
 
-int run(const struct bpf_program *prog, results_t *results, const int64_t *C[2])
+	int		count;
+	int		sum;
+	
+	UT_hash_handle	hh;
+} record_t;
+
+int run(const struct bpf_program *prog, record_t **records, const int64_t *C[2])
 {
+	struct bpf_insn *pc = &prog->bf_insns[0];
 	int64_t A = 0;
 	int64_t X = 0;
-	int pc = 0;
-	int cycles = 0;
+	record_t *r;
+	int ret;
 	
-	for (; cycles < MAX_CYCLES_PER_RECORD && pc < bpf_prog.bf_len; cycles++) {
-		struct bpf_insn *insn = &bpf_insns[pc];
+	--pc;
+	while (1) {
+		++pc;
 
-		switch (BPF_CLASS(insn->code)) {
+		switch (BPF_CLASS(pc->code)) {
 		case BPF_RET:
-			switch (BPF_RVAL(insn->code)) {
+			switch (BPF_RVAL(pc->code)) {
 			case BPF_K:
-				printf("%" PRId64 "\t%" PRId64 "\n", be64toh(*C[0]), be64toh(*C[1]));
-				return insn->k;
+				ret = pc->k;
+				break;
 			case BPF_X:
-				return X;
+				ret = X;
+				break;
 			case BPF_A:
-				return A;
+				ret = A;
+				break;
+			default:
+				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "UNKNOWN RVAL");
 			}
 
-			error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "UNKNOWN RVAL");
+			if (!ret)
+				return 0;
+
+			r = malloc(sizeof(record_t));
+			memset(r, 0, sizeof(record_t));
+
+			r->key.tim	= *C[0];
+			r->key.tv2nspid	= *C[1];
+
+			r->count = 1;
+			r->sum = 2;
+
+			HASH_ADD(hh, *records, key, sizeof(record_key_t), r);
+
+			return ret;
 		default:
 			error_at_line(EX_UNAVAILABLE, 0, __FILE__, __LINE__, "UNKNOWN CLASS");
 		}
-
-		pc++;
 	}
 
 	return 0;
 }
-
 
 int main(int argc, char **argv, char *env[])
 {
 	int cfd[2];
 	struct stat sb[2];
 	int64_t *c[2];
-	results_t *results = NULL;
+	record_t *records = NULL;
 	int nrows;
 
 	cfd[0] = open("day16265.tim.bin", O_RDONLY);
@@ -90,12 +106,14 @@ int main(int argc, char **argv, char *env[])
 	nrows = sb[0].st_size/sizeof(int64_t);
 
 	const int64_t *C[2] = { c[0], c[1] };
-	for (int r=0; r<nrows; r++, C[0]++, C[1]++) {
-		assert(run(&bpf_prog, results, C) > -1);
-	}
+	for (int r=0; r<nrows; r++, C[0]++, C[1]++)
+		assert(run(&bpf_prog, &records, C) > -1);
 
 	munmap(c[0], sb[0].st_size);
 	munmap(c[1], sb[1].st_size);
+
+//	for(r=records; r != NULL; r=r->hh.next)
+//		printf("%" PRId64 "\t%" PRId64 "\n", be64toh(r->key.tim), be64toh(r->key.tv2nspid));
 
 	return(EX_OK);
 }
