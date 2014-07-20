@@ -12,8 +12,8 @@
 #include <error.h>
 #include <uthash.h>
 #include <stdlib.h>
-#include "bpf.h"
 
+#include "bpf.h"
 #include "bpf-program.h"
 
 typedef struct {
@@ -67,8 +67,8 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[2])
 			r->key.tim	= *C[0];
 			r->key.tv2nspid	= *C[1];
 
-			r->count = 1;
-			r->sum = 2;
+			r->count	= 1;
+			r->sum		= 2;
 
 			HASH_ADD(hh, *records, key, sizeof(record_key_t), r);
 
