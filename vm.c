@@ -9,38 +9,53 @@
 #include <assert.h>
 #include <endian.h>
 #include <sysexits.h>
+#include <error.h>
+#include <uthash.h>
 #include "bpf.h"
 
-struct bpf_insn bpf_insns[] = {
-	{
-		.code	= BPF_RET+BPF_K,
-		.jt	= 0,
-		.jf	= 0,
-		.k	= -1,
-	}
-};
+#include "bpf-program.h"
 
-struct bpf_program bpf_prog = {
-	.bf_len		= sizeof(bpf_insns)/sizeof(struct bpf_insn),
-	.bf_insns	= bpf_insns,
-};
+#define MAX_CYCLES_PER_RECORD	10
 
-int run(const struct bpf_program *prog, const int columns, const int64_t *p, int64_t *m)
+typedef struct {
+	int64_t	tim;
+	int64_t	count;
+	
+	UT_hash_handle hh;
+} results_key_t;
+
+typedef struct {
+	int	sum;
+	int	count;
+	
+	UT_hash_handle hh;
+} results_value_t;
+
+int run(const struct bpf_program *prog, results_t *results, const int64_t *C[2])
 {
-	int64_t a = 0, x = 0;
-	int cycles, pc = 0;
-
-	for (cycles = 0; cycles < 10 && pc < bpf_prog.bf_len; cycles++) {
+	int64_t A = 0;
+	int64_t X = 0;
+	int pc = 0;
+	int cycles = 0;
+	
+	for (; cycles < MAX_CYCLES_PER_RECORD && pc < bpf_prog.bf_len; cycles++) {
 		struct bpf_insn *insn = &bpf_insns[pc];
 
-		switch (insn->code) {
+		switch (BPF_CLASS(insn->code)) {
 		case BPF_RET:
-			m[0] = p[0];
-			m[1] = p[1];
-			return insn->k;
+			switch (BPF_RVAL(insn->code)) {
+			case BPF_K:
+				printf("%" PRId64 "\t%" PRId64 "\n", be64toh(*C[0]), be64toh(*C[1]));
+				return insn->k;
+			case BPF_X:
+				return X;
+			case BPF_A:
+				return A;
+			}
+
+			error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "UNKNOWN RVAL");
 		default:
-			printf("moo default\n");
-			break;
+			error_at_line(EX_UNAVAILABLE, 0, __FILE__, __LINE__, "UNKNOWN CLASS");
 		}
 
 		pc++;
@@ -50,12 +65,13 @@ int run(const struct bpf_program *prog, const int columns, const int64_t *p, int
 }
 
 
-int main(int argc, char **argv)
+int main(int argc, char **argv, char *env[])
 {
 	int cfd[2];
 	struct stat sb[2];
 	int64_t *c[2];
-	int r, nrows;
+	results_t *results = NULL;
+	int nrows;
 
 	cfd[0] = open("day16265.tim.bin", O_RDONLY);
 	fstat(cfd[0], &sb[0]);
@@ -65,24 +81,17 @@ int main(int argc, char **argv)
 
 	assert(sb[0].st_size == sb[1].st_size);
 
-	nrows = sb[0].st_size/sizeof(int64_t);
-
 	c[0] = mmap(NULL, sb[0].st_size, PROT_READ, MAP_SHARED, cfd[0], 0);
 	close(cfd[0]);
 
 	c[1] = mmap(NULL, sb[1].st_size, PROT_READ, MAP_SHARED, cfd[1], 0);
 	close(cfd[1]);
 
-	for (r=0; r<nrows; r++) {
-		int64_t p[2] = {0};
-		int64_t m[2] = {0};
+	nrows = sb[0].st_size/sizeof(int64_t);
 
-		p[0] = be64toh(c[0][r]);
-		p[1] = be64toh(c[1][r]);
-
-		if (run(&bpf_prog, 2, p, m)) {
-			printf("%" PRId64 "\t%" PRId64 "\n", m[0], m[1]);
-		}
+	const int64_t *C[2] = { c[0], c[1] };
+	for (int r=0; r<nrows; r++, C[0]++, C[1]++) {
+		assert(run(&bpf_prog, results, C) > -1);
 	}
 
 	munmap(c[0], sb[0].st_size);

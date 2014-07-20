@@ -1,9 +1,4 @@
-/* originally based on: $NetBSD: bpf.h,v 1.57 2010/12/05 02:40:40 christos Exp $ */
-
-struct bpf_program {
-	u_int bf_len;
-	struct bpf_insn *bf_insns;
-};
+/* originally based on pcap/bpf.h */
 
 /*
  * The instruction encodings.
@@ -61,6 +56,11 @@ struct bpf_program {
 #define		BPF_TAX		0x00
 #define		BPF_TXA		0x80
 
+struct bpf_program {
+	u_int bf_len;
+	struct bpf_insn *bf_insns;
+};
+
 /*
  * The instruction data structure.
  */
@@ -76,3 +76,8 @@ struct bpf_insn {
  */
 #define BPF_STMT(code, k) { (uint16_t)(code), 0, 0, k }
 #define BPF_JUMP(code, k, jt, jf) { (uint16_t)(code), jt, jf, k }
+
+/*
+ * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).
+ */
+#define BPF_MEMWORDS 16

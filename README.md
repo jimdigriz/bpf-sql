@@ -1,4 +1,10 @@
+# Preflight
 
+    sudo apt-get install build-essential uthash-dev
+    
+    git clone https://github.com/jimdigriz/bpf-sql.git
+    cd bpf-sql
+    make
 
 # Sample
 

@@ -1,10 +1,12 @@
-VERSION	= $(shell git rev-parse --short HEAD)$(shell git diff-files --quiet || printf -- -dirty)
-#FLAGS	= -DVERSION="\"$(VERSION)\""
+VERSION		:= $(shell git rev-parse --short HEAD)$(shell git diff-files --quiet || printf -- -dirty)
+#FLAGS		:= -DVERSION="\"$(VERSION)\""
 
-KERNEL  = $(shell uname -s)
+KERNEL		:= $(shell uname -s)
 
-CFLAGS  = -pipe -pedantic -Wall -std=c99 -D_BSD_SOURCE -Iinclude
-LDFLAGS	= -lpthread
+INCLUDES	+= -Iinclude
+CPPFLAGS	+= $(INCLUDES)
+CFLAGS		+= -pipe -pedantic -Wall -std=c99 -D_BSD_SOURCE $(INCLUDES)
+LDFLAGS		+= -lpthread
 
 ifdef PROFILE
 	CFLAGS  += -pg
@@ -20,12 +22,12 @@ endif
 # better stripping
 CFLAGS	+= -fdata-sections
 ifndef PROFILE
-CFLAGS	+= -ffunction-sections
+	CFLAGS	+= -ffunction-sections
 endif
 LDFLAGS	+= -Wl,--gc-sections
 
-TARGETS	= vm
-OBJS	= vm.o
+TARGETS = vm
+SOURCES = vm.c
 
 all: $(TARGETS)
 
@@ -42,9 +44,17 @@ help:
 distclean: clean
 
 clean:
-	rm -f $(TARGETS) $(OBJS)
+	rm -f $(TARGETS) $(SOURCES:.c=.o) $(SOURCES:.c=.d)
 
-vm: vm.o
+vm: $(SOURCES:.c=.o)
+
+%.d: %.c
+	@set -e; rm -f $@; \
+	 $(CC) -M $(CPPFLAGS) $< > $@.$$$$; \
+	 sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	 rm -f $@.$$$$
+
+-include $(SOURCES:.c=.d)
 
 %.o: %.c
 	$(CROSS_COMPILE)$(CC) -c $(CFLAGS) $(FLAGS) $<
