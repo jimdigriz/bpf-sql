@@ -24,27 +24,27 @@ Break out each field and convert it to network ordered (big-endian) 64bit signed
 
 The engine closely resembles the BPF filtering engine described in the [BSD BPF manpage](http://www.freebsd.org/cgi/man.cgi?bpf(4)) which is closely modelled after the [Steven McCanne's and Van Jacobson's BPF paper](http://usenix.org/publications/library/proceedings/sd93/mccanne.pdf).
 
-    Element          Description
+    Element           Description
 
-    A                64 bit wide accumulator
-    X                64 bit wide X register
-    M[]              BPF_MEMWORDS x 64 bit wide misc registers aka "scratch
-                     memory store", addressable from 0 BPF_MEMWORDS-1
+    A                 64 bit wide accumulator
+    X                 64 bit wide X register
+    M[]               BPF_MEMWORDS x 64 bit wide misc registers aka "scratch
+                      memory store", addressable from 0 BPF_MEMWORDS-1
     
-    C[]              NCOL x 64bit wide read-only column registers that
-                     have the current row record data (akin to BPF's P[])
-    R[]              RCOL x 64bit wide registers to create/replace records
+    C[]               NCOL x 64bit wide read-only column registers that
+                      have the current row record data (akin to BPF's P[])
+    R[]               RCOL x 64bit wide registers to create/replace records
 
-    G                Global hash with all the results
+    G                 Global hash with all the results
 
 Addition of a new load/store destination `BPF_REC` (record) that provides:
 
-    BPF_LD+BPF_REC   A <- R[k]
-    BPF_LDX+BPF_REC  X <- R[k]
+    BPF_LD+BPF_REC    A <- R[k]
+    BPF_LDX+BPF_REC   X <- R[k]
     
-    BPF_ST+BPF_REC   R[k] <- A
-    BPF_STX+BPF_REC  R[k] <- X
+    BPF_ST+BPF_REC    R[k] <- A
+    BPF_STX+BPF_REC   R[k] <- X
 
-    BPF_RET          Non-zero stores R[] in G
+    BPF_RET           Non-zero stores R[] in G
 
-    BPF_LDR          Lookup possibly previously stored R[] from G into R[]
+    BPF_MISC+BPF_LDR  Lookup possibly previously stored R[] from G into R[]
