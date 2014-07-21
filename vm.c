@@ -131,11 +131,11 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 			break;
 		case BPF_ALU:
 			switch (BPF_SRC(pc->code)) {
-			case BPF_K:
-				v = pc->k;
-				break;
 			case BPF_X:
 				v = X;
+				break;
+			default: /* BPF_K */
+				v = pc->k;
 				break;
 			}
 
@@ -172,7 +172,34 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 			}
 			break;
 		case BPF_JMP:
-			assert(0);
+			switch (BPF_SRC(pc->code)) {
+			case BPF_X:
+				v = X;
+				break;
+			default: /* BPF_K */
+				v = pc->k;
+				break;
+			}
+
+			switch (BPF_OP(pc->code)) {
+			case BPF_JA:
+				pc += v;
+				continue;
+			case BPF_JGT:
+				pc += (A > v) ? pc->jt : pc->jf;
+				continue;
+			case BPF_JGE:
+				pc += (A >= v) ? pc->jt : pc->jf;
+				continue;
+			case BPF_JEQ:
+				pc += (A == v) ? pc->jt : pc->jf;
+				continue;
+			case BPF_JSET:
+				pc += (A & v) ? pc->jt : pc->jf;
+				continue;
+			default:
+				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "JMP: UNKNOWN OP");
+			}
 			break;
 		case BPF_RET:
 			switch (BPF_RVAL(pc->code)) {
