@@ -41,6 +41,7 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 	
 	--pc;
 	while (1) {
+		int64_t v;
 		++pc;
 
 		switch (BPF_CLASS(pc->code)) {
@@ -129,6 +130,47 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 			}
 			break;
 		case BPF_ALU:
+			switch (BPF_SRC(pc->code)) {
+			case BPF_K:
+				v = pc->k;
+				break;
+			case BPF_X:
+				v = X;
+				break;
+			}
+
+			switch (BPF_OP(pc->code)) {
+			case BPF_ADD:
+				A += v;
+				break;
+			case BPF_SUB:
+				A -= v;
+				break;
+			case BPF_MUL:
+				A *= v;
+				break;
+			case BPF_DIV:
+				A /= v;
+				break;
+			case BPF_AND:
+				A &= v;
+				break;
+			case BPF_OR:
+				A |= v;
+				break;
+			case BPF_LSH:
+				A <<= v;
+				break;
+			case BPF_RSH:
+				A >>= v;
+				break;
+			case BPF_NEG:
+				A = -A;
+				break;
+			default:
+				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "ALU: UNKNOWN OP");
+			}
+			break;
 		case BPF_JMP:
 			assert(0);
 			break;
