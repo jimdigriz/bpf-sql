@@ -24,11 +24,9 @@
 #define		BPF_ABS		0x20
 #define		BPF_IND		0x40
 #define		BPF_MEM		0x60
-/* defunct
 #define		BPF_LEN		0x80
 #define		BPF_MSH		0xa0
-*/
-#define		BPF_REC		0x80
+#define		BPF_REC		0xc0
 
 /* alu/jmp fields */
 #define BPF_OP(code)	((code) & 0xf0)
@@ -58,6 +56,7 @@
 #define BPF_MISCOP(code) ((code) & 0xf8)
 #define		BPF_TAX		0x00
 #define		BPF_TXA		0x80
+#define		BPF_LDR		0xa0
 
 struct bpf_program {
 	u_int bf_len;

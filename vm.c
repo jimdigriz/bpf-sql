@@ -30,7 +30,7 @@ typedef struct {
 	UT_hash_handle	hh;
 } record_t;
 
-int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HACK_SIZE])
+int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE])
 {
 	struct bpf_insn *pc = &prog->bf_insns[0];
 	int64_t A = 0;
@@ -233,7 +233,7 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 
 			assert(R);
 
-			HASH_ADD(hh, *records, key, sizeof(record_key_t), R);
+			HASH_ADD(hh, *G, key, sizeof(record_key_t), R);
 
 			R = NULL;
 
@@ -246,6 +246,8 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 			case BPF_TXA:
 				A = X;
 				break;
+			case BPF_LDR:
+				assert(0); /* TODO */
 			}
 			break;
 		default:
@@ -261,7 +263,7 @@ int main(int argc, char **argv, char *env[])
 	int cfd[HACK_SIZE];
 	struct stat sb[HACK_SIZE];
 	int64_t *c[HACK_SIZE];
-	record_t *records = NULL;
+	record_t *G = NULL;
 	int nrows;
 
 	cfd[0] = open("day16265.tim.bin", O_RDONLY);
@@ -282,12 +284,12 @@ int main(int argc, char **argv, char *env[])
 
 	const int64_t *C[HACK_SIZE] = { c[0], c[1] };
 	for (int r=0; r<nrows; r++, C[0]++, C[1]++)
-		assert(run(&bpf_prog, &records, C) > -1);
+		assert(run(&bpf_prog, &G, C) > -1);
 
 	munmap(c[0], sb[0].st_size);
 	munmap(c[1], sb[1].st_size);
 
-//	for(r=records; r != NULL; r=r->hh.next)
+//	for(r=G; r != NULL; r=r->hh.next)
 //		printf("%" PRId64 "\t%" PRId64 "\n", be64toh(r->key.tim), be64toh(r->key.tv2nspid));
 
 	return(EX_OK);
