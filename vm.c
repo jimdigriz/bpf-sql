@@ -194,19 +194,19 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 			switch (BPF_OP(pc->code)) {
 			case BPF_JA:
 				pc += v;
-				continue;
+				break;
 			case BPF_JGT:
 				pc += (A > v) ? pc->jt : pc->jf;
-				continue;
+				break;
 			case BPF_JGE:
 				pc += (A >= v) ? pc->jt : pc->jf;
-				continue;
+				break;
 			case BPF_JEQ:
 				pc += (A == v) ? pc->jt : pc->jf;
-				continue;
+				break;
 			case BPF_JSET:
 				pc += (A & v) ? pc->jt : pc->jf;
-				continue;
+				break;
 			default:
 				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "JMP: UNKNOWN OP");
 			}
