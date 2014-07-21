@@ -16,20 +16,21 @@
 #include "bpf.h"
 #include "bpf-program.h"
 
+#define HACK_SIZE 2
+
 typedef struct {
-	int64_t r[2];
+	int64_t r[HACK_SIZE];
 } record_key_t;
 
 typedef struct {
 	record_key_t	key;
 
-	int		count;
-	int		sum;
+	int64_t		r[HACK_SIZE];
 	
 	UT_hash_handle	hh;
 } record_t;
 
-int run(const struct bpf_program *prog, record_t **records, const int64_t *C[2])
+int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HACK_SIZE])
 {
 	struct bpf_insn *pc = &prog->bf_insns[0];
 	int64_t A = 0;
@@ -42,7 +43,92 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[2])
 	while (1) {
 		++pc;
 
+		assert(BPF_SIZE(pc->code) == 0x00);
+
 		switch (BPF_CLASS(pc->code)) {
+		case BPF_LD:
+			switch (BPF_MODE(pc->code)) {
+			case BPF_ABS:
+				assert(pc->k < HACK_SIZE);
+				A = *C[pc->k];
+				break;
+			case BPF_IND:
+				assert(X + pc->k < HACK_SIZE);
+				A = *C[X + pc->k];
+				break;
+			case BPF_IMM:
+				A = pc->k;
+				break;
+			case BPF_MEM:
+				assert(pc->k < BPF_MEMWORDS);
+				A = M[pc->k];
+				break;
+			case BPF_REC:
+				assert(R);
+				assert(pc->k < HACK_SIZE);
+				A = R->key.r[pc->k];
+				break;
+			default:
+				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "LD: UNKNOWN MODE");
+			}
+			break;
+		case BPF_LDX:
+			switch (BPF_MODE(pc->code)) {
+			case BPF_IMM:
+				X = pc->k;
+				break;
+			case BPF_MEM:
+				assert(pc->k < BPF_MEMWORDS);
+				X = M[pc->k];
+				break;
+			case BPF_REC:
+				assert(R);
+				assert(pc->k < HACK_SIZE);
+				X = R->key.r[pc->k];
+				break;
+			default:
+				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "LDX: UNKNOWN MODE");
+			}
+			break;
+		case BPF_ST:
+			switch (BPF_MODE(pc->code)) {
+			case BPF_MEM:
+				assert(pc->k < BPF_MEMWORDS);
+				M[pc->k] = A;
+				break;
+			case BPF_REC:
+				assert(pc->k < HACK_SIZE);
+				if (!R) {
+					R = malloc(sizeof(record_t));
+					memset(R, 0, sizeof(record_t));
+				}
+				R->key.r[pc->k] = A;
+				break;
+			default:
+				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "ST: UNKNOWN MODE");
+			}
+			break;
+		case BPF_STX:
+			switch (BPF_MODE(pc->code)) {
+			case BPF_MEM:
+				assert(pc->k < BPF_MEMWORDS);
+				M[pc->k] = X;
+				break;
+			case BPF_REC:
+				assert(pc->k < HACK_SIZE);
+				if (!R) {
+					R = malloc(sizeof(record_t));
+					memset(R, 0, sizeof(record_t));
+				}
+				R->key.r[pc->k] = X;
+				break;
+			default:
+				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "STX: UNKNOWN MODE");
+			}
+			break;
+		case BPF_ALU:
+		case BPF_JMP:
+			assert(0);
 		case BPF_RET:
 			switch (BPF_RVAL(pc->code)) {
 			case BPF_K:
@@ -59,18 +145,16 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[2])
 			}
 
 			if (!ret) {
-				if (R)
-					error_at_line(EX_UNAVAILABLE, 0, __FILE__, __LINE__, "RET 0 with R");
+				assert(!R);
 				return 0;
 			}
 
-			if (!R)
-				error_at_line(EX_UNAVAILABLE, 0, __FILE__, __LINE__, "RET with no R");
+			assert(R);
 
 			//R->key.r[0]	= *C[0];
 			//R->key.r[1]	= *C[1];
-			//R->count	= 1;
-			//R->sum	= 2;
+			//R->r[0]	= 1;
+			//R->r[1]	= 2;
 
 			HASH_ADD(hh, *records, key, sizeof(record_key_t), R);
 
@@ -78,34 +162,15 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[2])
 
 			return ret;
 			break;
-		case BPF_LD:
-		case BPF_LDX:
-			if (!R)
-				error_at_line(EX_UNAVAILABLE, 0, __FILE__, __LINE__, "LD with no R");
-			break;
-		case BPF_ST:
-		case BPF_STX:
-			switch (BPF_MODE(pc->code)) {
-			case BPF_IMM:
-				if (BPF_CLASS(pc->code) == BPF_ST)
-					A = pc->k;
-				else
-					X = pc->k;
+		case BPF_MISC:
+			switch (BPF_MISCOP(pc->code)) {
+			case BPF_TAX:
+				X = A;
 				break;
-			case BPF_MEM:
-				M[pc->k] = (BPF_CLASS(pc->code) == BPF_ST) ? A : X;
+			case BPF_TXA:
+				A = X;
 				break;
-			case BPF_REC:
-				if (!R) {
-					R = malloc(sizeof(record_t));
-					memset(R, 0, sizeof(record_t));
-				}
-				R->key.r[pc->k] = (BPF_CLASS(pc->code) == BPF_ST) ? A : X;
-				break;
-			default:
-				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "ST: UNKNOWN RVAL");
 			}
-
 			break;
 		default:
 			error_at_line(EX_UNAVAILABLE, 0, __FILE__, __LINE__, "UNKNOWN CLASS");
@@ -117,9 +182,9 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[2])
 
 int main(int argc, char **argv, char *env[])
 {
-	int cfd[2];
-	struct stat sb[2];
-	int64_t *c[2];
+	int cfd[HACK_SIZE];
+	struct stat sb[HACK_SIZE];
+	int64_t *c[HACK_SIZE];
 	record_t *records = NULL;
 	int nrows;
 
@@ -139,7 +204,7 @@ int main(int argc, char **argv, char *env[])
 
 	nrows = sb[0].st_size/sizeof(int64_t);
 
-	const int64_t *C[2] = { c[0], c[1] };
+	const int64_t *C[HACK_SIZE] = { c[0], c[1] };
 	for (int r=0; r<nrows; r++, C[0]++, C[1]++)
 		assert(run(&bpf_prog, &records, C) > -1);
 
