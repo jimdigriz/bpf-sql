@@ -17,8 +17,7 @@
 #include "bpf-program.h"
 
 typedef struct {
-	int64_t	tim;
-	int64_t	tv2nspid;
+	int64_t r[2];
 } record_key_t;
 
 typedef struct {
@@ -35,7 +34,8 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[2])
 	struct bpf_insn *pc = &prog->bf_insns[0];
 	int64_t A = 0;
 	int64_t X = 0;
-	record_t *r;
+	int64_t M[BPF_MEMWORDS] = {0};
+	record_t *R = NULL;
 	int ret;
 	
 	--pc;
@@ -55,24 +55,58 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[2])
 				ret = A;
 				break;
 			default:
-				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "UNKNOWN RVAL");
+				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "RET: UNKNOWN RVAL");
 			}
 
-			if (!ret)
+			if (!ret) {
+				if (R)
+					error_at_line(EX_UNAVAILABLE, 0, __FILE__, __LINE__, "RET 0 with R");
 				return 0;
+			}
 
-			r = malloc(sizeof(record_t));
-			memset(r, 0, sizeof(record_t));
+			if (!R)
+				error_at_line(EX_UNAVAILABLE, 0, __FILE__, __LINE__, "RET with no R");
 
-			r->key.tim	= *C[0];
-			r->key.tv2nspid	= *C[1];
+			//R->key.r[0]	= *C[0];
+			//R->key.r[1]	= *C[1];
+			//R->count	= 1;
+			//R->sum	= 2;
 
-			r->count	= 1;
-			r->sum		= 2;
+			HASH_ADD(hh, *records, key, sizeof(record_key_t), R);
 
-			HASH_ADD(hh, *records, key, sizeof(record_key_t), r);
+			R = NULL;
 
 			return ret;
+			break;
+		case BPF_LD:
+		case BPF_LDX:
+			if (!R)
+				error_at_line(EX_UNAVAILABLE, 0, __FILE__, __LINE__, "LD with no R");
+			break;
+		case BPF_ST:
+		case BPF_STX:
+			switch (BPF_MODE(pc->code)) {
+			case BPF_IMM:
+				if (BPF_CLASS(pc->code) == BPF_ST)
+					A = pc->k;
+				else
+					X = pc->k;
+				break;
+			case BPF_MEM:
+				M[pc->k] = (BPF_CLASS(pc->code) == BPF_ST) ? A : X;
+				break;
+			case BPF_REC:
+				if (!R) {
+					R = malloc(sizeof(record_t));
+					memset(R, 0, sizeof(record_t));
+				}
+				R->key.r[pc->k] = (BPF_CLASS(pc->code) == BPF_ST) ? A : X;
+				break;
+			default:
+				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "ST: UNKNOWN RVAL");
+			}
+
+			break;
 		default:
 			error_at_line(EX_UNAVAILABLE, 0, __FILE__, __LINE__, "UNKNOWN CLASS");
 		}

@@ -24,8 +24,11 @@
 #define		BPF_ABS		0x20
 #define		BPF_IND		0x40
 #define		BPF_MEM		0x60
+/* defunct
 #define		BPF_LEN		0x80
 #define		BPF_MSH		0xa0
+*/
+#define		BPF_REC		0x80
 
 /* alu/jmp fields */
 #define BPF_OP(code)	((code) & 0xf0)
