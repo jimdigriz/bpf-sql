@@ -43,10 +43,10 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 	while (1) {
 		++pc;
 
-		assert(BPF_SIZE(pc->code) == 0x00);
-
 		switch (BPF_CLASS(pc->code)) {
 		case BPF_LD:
+			assert(BPF_SIZE(pc->code) == 0x00);
+
 			switch (BPF_MODE(pc->code)) {
 			case BPF_ABS:
 				assert(pc->k < HACK_SIZE);
@@ -73,6 +73,8 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 			}
 			break;
 		case BPF_LDX:
+			assert(BPF_SIZE(pc->code) == 0x00);
+
 			switch (BPF_MODE(pc->code)) {
 			case BPF_IMM:
 				X = pc->k;
