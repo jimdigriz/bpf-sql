@@ -66,8 +66,10 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 				break;
 			case BPF_REC:
 				assert(R);
-				assert(pc->k < HACK_SIZE);
-				A = R->key.r[pc->k];
+				assert(pc->k < HACK_SIZE * 2);
+				A = (pc->k < HACK_SIZE)
+					? R->key.r[pc->k]
+					: R->r[pc->k - HACK_SIZE];
 				break;
 			default:
 				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "LD: UNKNOWN MODE");
@@ -86,8 +88,10 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 				break;
 			case BPF_REC:
 				assert(R);
-				assert(pc->k < HACK_SIZE);
-				X = R->key.r[pc->k];
+				assert(pc->k < HACK_SIZE * 2);
+				X = (pc->k < HACK_SIZE)
+					? R->key.r[pc->k]
+					: R->r[pc->k - HACK_SIZE];
 				break;
 			default:
 				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "LDX: UNKNOWN MODE");
@@ -100,12 +104,15 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 				M[pc->k] = A;
 				break;
 			case BPF_REC:
-				assert(pc->k < HACK_SIZE);
+				assert(pc->k < HACK_SIZE * 2);
 				if (!R) {
 					R = malloc(sizeof(record_t));
 					memset(R, 0, sizeof(record_t));
 				}
-				R->key.r[pc->k] = A;
+				if (pc->k < HACK_SIZE)
+					R->key.r[pc->k] = A;
+				else
+					R->r[pc->k - HACK_SIZE] = A;
 				break;
 			default:
 				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "ST: UNKNOWN MODE");
@@ -118,12 +125,15 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 				M[pc->k] = X;
 				break;
 			case BPF_REC:
-				assert(pc->k < HACK_SIZE);
+				assert(pc->k < HACK_SIZE * 2);
 				if (!R) {
 					R = malloc(sizeof(record_t));
 					memset(R, 0, sizeof(record_t));
 				}
-				R->key.r[pc->k] = X;
+				if (pc->k < HACK_SIZE)
+					R->key.r[pc->k] = X;
+				else
+					R->r[pc->k - HACK_SIZE] = X;
 				break;
 			default:
 				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "STX: UNKNOWN MODE");
@@ -222,11 +232,6 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 			}
 
 			assert(R);
-
-			//R->key.r[0]	= *C[0];
-			//R->key.r[1]	= *C[1];
-			//R->r[0]	= 1;
-			//R->r[1]	= 2;
 
 			HASH_ADD(hh, *records, key, sizeof(record_key_t), R);
 
