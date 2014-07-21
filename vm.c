@@ -37,7 +37,6 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 	int64_t X = 0;
 	int64_t M[BPF_MEMWORDS] = {0};
 	record_t *R = NULL;
-	int ret;
 	
 	--pc;
 	while (1) {
@@ -213,20 +212,18 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 			break;
 		case BPF_RET:
 			switch (BPF_RVAL(pc->code)) {
-			case BPF_K:
-				ret = pc->k;
-				break;
 			case BPF_X:
-				ret = X;
+				v = X;
 				break;
 			case BPF_A:
-				ret = A;
+				v = A;
 				break;
-			default:
-				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "RET: UNKNOWN RVAL");
+			default: /* BPF_K */
+				v = pc->k;
+				break;
 			}
 
-			if (!ret) {
+			if (!v) {
 				assert(!R);
 				return 0;
 			}
@@ -237,7 +234,7 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 
 			R = NULL;
 
-			return ret;
+			return v;
 		case BPF_MISC:
 			switch (BPF_MISCOP(pc->code)) {
 			case BPF_TAX:
