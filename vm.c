@@ -233,7 +233,6 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 			R = NULL;
 
 			return ret;
-			break;
 		case BPF_MISC:
 			switch (BPF_MISCOP(pc->code)) {
 			case BPF_TAX:
