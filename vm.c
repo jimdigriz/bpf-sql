@@ -131,6 +131,7 @@ int run(const struct bpf_program *prog, record_t **records, const int64_t *C[HAC
 		case BPF_ALU:
 		case BPF_JMP:
 			assert(0);
+			break;
 		case BPF_RET:
 			switch (BPF_RVAL(pc->code)) {
 			case BPF_K:
