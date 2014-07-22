@@ -14,7 +14,7 @@ ifdef PROFILE
 endif
 
 ifdef NDEBUG
-	CFLAGS	+= -O3
+	CFLAGS	+= -DNDEBUG -O3
 else
 	CFLAGS	+= -g3
 endif
