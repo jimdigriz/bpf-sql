@@ -45,6 +45,6 @@ Addition of a new load/store destination `BPF_REC` (record) that provides:
     BPF_ST+BPF_REC    R[k] <- A
     BPF_STX+BPF_REC   R[k] <- X
 
-    BPF_RET           Non-zero stores R[] in G
+    BPF_RET           Non-zero adds/replaces R[] in G
 
-    BPF_MISC+BPF_LDR  Lookup possibly previously stored R[] from G into R[]
+    BPF_MISC+BPF_LDR  Fetch R[] from G
