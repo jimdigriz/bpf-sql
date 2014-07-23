@@ -260,6 +260,8 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 		}
 	}
 
+	assert(!R);
+
 	return 0;
 }
 
