@@ -12,6 +12,7 @@
 #include <error.h>
 #include <uthash.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "bpf.h"
 #include "bpf-program.h"
@@ -37,6 +38,8 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 	int64_t X = 0;
 	int64_t M[BPF_MEMWORDS] = {0};
 	record_t *R = NULL;
+	record_t *R_old = NULL;
+	record_key_t key;
 	
 	--pc;
 	while (1) {
@@ -244,7 +247,12 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 				A = X;
 				break;
 			case BPF_LDR:
-				assert(0); /* TODO */
+				assert(R);
+				memcpy(&key, &R->key, sizeof(record_key_t));
+				R_old = R;
+				HASH_FIND(hh, *G, &key, sizeof(record_key_t), R);
+				if (!R)
+					R = R_old;
 			}
 			break;
 		default:
