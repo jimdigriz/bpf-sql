@@ -271,6 +271,7 @@ int main(int argc, char **argv, char *env[])
 	struct stat sb[HACK_SIZE];
 	int64_t *c[HACK_SIZE];
 	record_t *G = NULL;
+	record_t *R;
 	int nrows;
 
 	cfd[0] = open("day16265.tim.bin", O_RDONLY);
@@ -296,8 +297,9 @@ int main(int argc, char **argv, char *env[])
 	munmap(c[0], sb[0].st_size);
 	munmap(c[1], sb[1].st_size);
 
-//	for(r=G; r != NULL; r=r->hh.next)
-//		printf("%" PRId64 "\t%" PRId64 "\n", be64toh(r->key.tim), be64toh(r->key.tv2nspid));
+	for(R=G; R != NULL; R=R->hh.next)
+		printf("%" PRId64 "\t%" PRId64 "\t%" PRId64 "\t%" PRId64 "\n",
+			be64toh(R->key.r[0]), be64toh(R->key.r[1]), be64toh(R->r[0]), be64toh(R->r[1]));
 
 	return(EX_OK);
 }
