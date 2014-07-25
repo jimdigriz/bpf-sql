@@ -13,6 +13,7 @@
 #include <uthash.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include "bpf.h"
 #include "bpf-program.h"
@@ -38,8 +39,7 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 	int64_t X = 0;
 	int64_t M[BPF_MEMWORDS] = {0};
 	record_t *R = NULL;
-	record_t *R_old = NULL;
-	record_key_t key = {0};
+	record_t *R_old;
 	
 	--pc;
 	while (1) {
@@ -102,6 +102,8 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 				assert(pc->k < HACK_SIZE * 2);
 				if (!R) {
 					R = malloc(sizeof(record_t));
+					if (!R)
+						error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "malloc(R)");
 					memset(R, 0, sizeof(record_t));
 				}
 				if (pc->k < HACK_SIZE)
@@ -215,6 +217,12 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 
 			assert(R);
 
+			HASH_FIND(hh, *G, &R->key, sizeof(record_key_t), R_old);
+			if (R_old) {
+				HASH_DELETE(hh, *G, R_old);
+				free(R_old);
+			}
+
 			HASH_ADD(hh, *G, key, sizeof(record_key_t), R);
 
 			R = NULL;
@@ -230,11 +238,11 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 				break;
 			case BPF_LDR:
 				assert(R);
-				memcpy(&key, &R->key, sizeof(record_key_t));
-				R_old = R;
-				HASH_FIND(hh, *G, &key, sizeof(record_key_t), R);
-				if (!R)
+				HASH_FIND(hh, *G, &R->key, sizeof(record_key_t), R_old);
+				if (R_old) {
+					free(R);
 					R = R_old;
+				}
 			}
 			break;
 		default:
