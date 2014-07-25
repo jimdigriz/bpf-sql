@@ -276,8 +276,10 @@ int main(int argc, char **argv, char *env[])
 	nrows = sb[0].st_size/sizeof(int64_t);
 
 	const int64_t *C[HACK_SIZE] = { c[0], c[1] };
-	for (int r=0; r<nrows; r++, C[0]++, C[1]++)
-		assert(run(&bpf_prog, &G, C) > -1);
+	for (int r=0; r<nrows; r++, C[0]++, C[1]++) {
+		int ret = run(&bpf_prog, &G, C);
+		assert(ret > -1);
+	}
 
 	munmap(c[0], sb[0].st_size);
 	munmap(c[1], sb[1].st_size);
