@@ -10,6 +10,11 @@ struct bpf_insn bpf_insns[] = {
 	/* find in G */
 	BPF_STMT(BPF_MISC+BPF_LDR, 0),
 	
+	/* R[2]++ */
+	BPF_STMT(BPF_LD+BPF_REC, 2),
+	BPF_STMT(BPF_ALU+BPF_ADD+BPF_K, 1),
+	BPF_STMT(BPF_ST+BPF_REC, 2),
+
 	/* R[3] += R[1] */
 	BPF_STMT(BPF_LD+BPF_REC, 1),
 	BPF_STMT(BPF_MISC+BPF_TAX, 0),
