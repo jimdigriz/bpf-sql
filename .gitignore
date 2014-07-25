@@ -3,4 +3,7 @@
 
 vm
 
+gmon.out
 *.[do]
+*.gcda
+*.gcno

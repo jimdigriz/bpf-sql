@@ -9,8 +9,8 @@ CFLAGS		+= -pipe -pedantic -Wall -std=c99 -D_BSD_SOURCE $(INCLUDES)
 LDFLAGS		+= -lpthread
 
 ifdef PROFILE
-	CFLAGS  += -pg
-	LDFLAGS += -pg
+	CFLAGS  += -pg -fprofile-arcs -ftest-coverage
+	LDFLAGS += -pg -lgcov -coverage
 endif
 
 ifdef NDEBUG
