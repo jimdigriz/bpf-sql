@@ -39,7 +39,7 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 	int64_t M[BPF_MEMWORDS] = {0};
 	record_t *R = NULL;
 	record_t *R_old = NULL;
-	record_key_t key;
+	record_key_t key = {0};
 	
 	--pc;
 	while (1) {
@@ -53,11 +53,11 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 			switch (BPF_MODE(pc->code)) {
 			case BPF_ABS:
 				assert(pc->k < HACK_SIZE);
-				A = *C[pc->k];
+				A = be64toh(*C[pc->k]);
 				break;
 			case BPF_IND:
 				assert(X + pc->k < HACK_SIZE);
-				A = *C[X + pc->k];
+				A = be64toh(*C[X + pc->k]);
 				break;
 			case BPF_IMM:
 				A = pc->k;
@@ -70,8 +70,8 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 				assert(R);
 				assert(pc->k < HACK_SIZE * 2);
 				A = (pc->k < HACK_SIZE)
-					? R->key.r[pc->k]
-					: R->r[pc->k - HACK_SIZE];
+					? be64toh(R->key.r[pc->k])
+					: be64toh(R->r[pc->k - HACK_SIZE]);
 				break;
 			default:
 				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "LD: UNKNOWN MODE");
@@ -87,13 +87,6 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 			case BPF_MEM:
 				assert(pc->k < BPF_MEMWORDS);
 				X = M[pc->k];
-				break;
-			case BPF_REC:
-				assert(R);
-				assert(pc->k < HACK_SIZE * 2);
-				X = (pc->k < HACK_SIZE)
-					? R->key.r[pc->k]
-					: R->r[pc->k - HACK_SIZE];
 				break;
 			default:
 				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "LDX: UNKNOWN MODE");
@@ -112,9 +105,9 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 					memset(R, 0, sizeof(record_t));
 				}
 				if (pc->k < HACK_SIZE)
-					R->key.r[pc->k] = A;
+					R->key.r[pc->k] = htobe64(A);
 				else
-					R->r[pc->k - HACK_SIZE] = A;
+					R->r[pc->k - HACK_SIZE] = htobe64(A);
 				break;
 			default:
 				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "ST: UNKNOWN MODE");
@@ -125,17 +118,6 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 			case BPF_MEM:
 				assert(pc->k < BPF_MEMWORDS);
 				M[pc->k] = X;
-				break;
-			case BPF_REC:
-				assert(pc->k < HACK_SIZE * 2);
-				if (!R) {
-					R = malloc(sizeof(record_t));
-					memset(R, 0, sizeof(record_t));
-				}
-				if (pc->k < HACK_SIZE)
-					R->key.r[pc->k] = X;
-				else
-					R->r[pc->k - HACK_SIZE] = X;
 				break;
 			default:
 				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "STX: UNKNOWN MODE");

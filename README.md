@@ -37,14 +37,16 @@ The engine closely resembles the BPF filtering engine described in the [BSD BPF 
 
     G                 Global hash with all the results
 
+Amended the meaning of the following instructions:
+
+    BPF_LD+BPF_ABS    A <- C[k]
+    BPF_LD+BPF_IND    A <- C[X + k]
+
+    BPF_RET           Non-zero adds/replaces R[] in G
+
 Addition of a new load/store destination `BPF_REC` (record) that provides:
 
     BPF_LD+BPF_REC    A <- R[k]
-    BPF_LDX+BPF_REC   X <- R[k]
-    
     BPF_ST+BPF_REC    R[k] <- A
-    BPF_STX+BPF_REC   R[k] <- X
-
-    BPF_RET           Non-zero adds/replaces R[] in G
 
     BPF_MISC+BPF_LDR  Fetch R[] from G
