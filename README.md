@@ -1,4 +1,4 @@
-Some experiments in grafting [BPF](http://en.wikipedia.org/wiki/Berkeley_Packet_Filter) onto a [Column-oriented DBMS](http://en.wikipedia.org/wiki/Column-oriented_DBMS) and providing an SQL like interface to the user.
+Some experiments in grafting a [Berkeley Packet Filter (BPF)](http://en.wikipedia.org/wiki/Berkeley_Packet_Filter) onto a [Column-oriented Database](http://en.wikipedia.org/wiki/Column-oriented_DBMS) and providing an SQL like interface to the user.
 
 # Preflight
 
@@ -37,14 +37,16 @@ The engine closely resembles the BPF filtering engine described in the [BSD BPF 
 
     G                 Global hash with all the results
 
-Amended the meaning of the following instructions:
+The following instructions have had their action slightly amended:
 
     BPF_LD+BPF_ABS    A <- C[k]
     BPF_LD+BPF_IND    A <- C[X + k]
 
     BPF_RET           Non-zero adds/replaces R[] in G
 
-Addition of a new load/store destination `BPF_REC` (record) that provides:
+**N.B.** all operations are 64bit signed integers
+
+The following load/store/find `BPF_REC` (record) instructions have been added:
 
     BPF_LD+BPF_REC    A <- R[k]
     BPF_ST+BPF_REC    R[k] <- A
