@@ -1,3 +1,5 @@
+/* SELECT TIM,TV2NSPID,COUNT(TV2NSPID),SUM(TV2NSPID) */
+
 struct bpf_insn bpf_insns[] = {
 	/* R[0] = C[0] */
 	BPF_STMT(BPF_LD+BPF_ABS, 0),
