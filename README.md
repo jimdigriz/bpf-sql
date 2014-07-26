@@ -67,4 +67,4 @@ In roughly order of importance:
  * SQL to BPF converter
  * BPF optimiser
  * [`posix_madvise()`](http://www.freebsd.org/cgi/man.cgi?posix_madvise(2)) hints
- * investigate [bcolz](https://github.com/Blosc/bcolz)
+ * investigate [Blosc](http://www.blosc.org/) and its [c-blosc](https://github.com/Blosc/c-blosc) library
