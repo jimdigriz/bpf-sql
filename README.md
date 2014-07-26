@@ -52,3 +52,17 @@ The following load/store/find `BPF_REC` (record) instructions have been added:
     BPF_ST+BPF_REC    R[k] <- A
 
     BPF_MISC+BPF_LDR  Fetch R[] from G
+
+# TODO
+
+In roughly order of importance:
+
+ * tool to generate mock data to experiment with
+ * remove `HACK` and make everything more dynamic
+ * improve the profiling support
+ * frequency analysis
+ * Venn statements
+ * SQL to BPF converter
+ * BPF optimiser
+ * `posix_[mf]advise()` hints
+ * investigate [bcolz](https://github.com/Blosc/bcolz)
