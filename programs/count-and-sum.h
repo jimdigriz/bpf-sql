@@ -30,3 +30,16 @@ struct bpf_program bpf_prog = {
 	.bf_len		= sizeof(bpf_insns)/sizeof(struct bpf_insn),
 	.bf_insns	= bpf_insns,
 };
+
+bpf_sql_t bpf_sql = {
+	.ncols	= 2,
+	.col	= {
+			"day16265.tim.bin",
+			"day16265.tv2nspid.bin"
+	},
+
+	.nkeys	= 2,
+	.width	= 2,
+
+	.prog	= &bpf_prog,
+};

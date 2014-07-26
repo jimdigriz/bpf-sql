@@ -15,26 +15,29 @@
 #include <string.h>
 #include <errno.h>
 
-#include "bpf.h"
-#include "bpf-program.h"
+#include "bpf-sql.h"
 
-#define HACK_SIZE 2
+#include "program.h"
+
+#define HACK_CSIZE 2 /* bpf_sql.ncols */
+#define HACK_KSIZE 2 /* bpf_sql.nkeys */
+#define HACK_RSIZE 2 /* bpf_sql.width */
 
 typedef struct {
-	int64_t r[HACK_SIZE];
+	int64_t r[HACK_KSIZE];
 } record_key_t;
 
 typedef struct {
 	record_key_t	key;
 
-	int64_t		r[HACK_SIZE];
+	int64_t		r[HACK_RSIZE];
 	
 	UT_hash_handle	hh;
 } record_t;
 
-int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE])
+int run(const bpf_sql_t *bs, record_t **G, const int64_t **C)
 {
-	struct bpf_insn *pc = &prog->bf_insns[0];
+	struct bpf_insn *pc = &bs->prog->bf_insns[0];
 	int64_t A = 0;
 	int64_t X = 0;
 	int64_t M[BPF_MEMWORDS] = {0};
@@ -52,11 +55,11 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 
 			switch (BPF_MODE(pc->code)) {
 			case BPF_ABS:
-				assert(pc->k < HACK_SIZE);
+				assert(pc->k < bs->ncols);
 				A = be64toh(*C[pc->k]);
 				break;
 			case BPF_IND:
-				assert(X + pc->k < HACK_SIZE);
+				assert(X + pc->k < bs->ncols);
 				A = be64toh(*C[X + pc->k]);
 				break;
 			case BPF_IMM:
@@ -68,10 +71,10 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 				break;
 			case BPF_REC:
 				assert(R);
-				assert(pc->k < HACK_SIZE * 2);
-				A = (pc->k < HACK_SIZE)
+				assert(pc->k < bs->nkeys + bs->width);
+				A = (pc->k < bs->nkeys)
 					? be64toh(R->key.r[pc->k])
-					: be64toh(R->r[pc->k - HACK_SIZE]);
+					: be64toh(R->r[pc->k - bs->nkeys]);
 				break;
 			default:
 				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "LD: UNKNOWN MODE");
@@ -99,17 +102,17 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 				M[pc->k] = A;
 				break;
 			case BPF_REC:
-				assert(pc->k < HACK_SIZE * 2);
+				assert(pc->k < bs->nkeys + bs->width);
 				if (!R) {
 					R = malloc(sizeof(record_t));
 					if (!R)
 						error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "malloc(R)");
 					memset(R, 0, sizeof(record_t));
 				}
-				if (pc->k < HACK_SIZE)
+				if (pc->k < bs->nkeys)
 					R->key.r[pc->k] = htobe64(A);
 				else
-					R->r[pc->k - HACK_SIZE] = htobe64(A);
+					R->r[pc->k - bs->nkeys] = htobe64(A);
 				break;
 			default:
 				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "ST: UNKNOWN MODE");
@@ -257,15 +260,15 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 
 int main(int argc, char **argv, char *env[])
 {
-	int cfd[HACK_SIZE];
-	struct stat sb[HACK_SIZE];
-	int64_t *c[HACK_SIZE];
+	int cfd[bpf_sql.ncols];
+	struct stat sb[bpf_sql.ncols];
+	int64_t *c[bpf_sql.ncols];
 	record_t *G = NULL;
 
-	cfd[0] = open("day16265.tim.bin", O_RDONLY);
+	cfd[0] = open(bpf_sql.col[0], O_RDONLY);
 	fstat(cfd[0], &sb[0]);
 
-	cfd[1] = open("day16265.tv2nspid.bin", O_RDONLY);
+	cfd[1] = open(bpf_sql.col[1], O_RDONLY);
 	fstat(cfd[1], &sb[1]);
 
 	assert(sb[0].st_size == sb[1].st_size);
@@ -278,9 +281,9 @@ int main(int argc, char **argv, char *env[])
 
 	int nrows = sb[0].st_size/sizeof(int64_t);
 
-	const int64_t *C[HACK_SIZE] = { c[0], c[1] };
+	const int64_t *C[HACK_CSIZE] = { c[0], c[1] };
 	for (int r=0; r<nrows; r++, C[0]++, C[1]++) {
-		int ret = run(&bpf_prog, &G, C);
+		int ret = run(&bpf_sql, &G, C);
 		assert(ret > -1);
 	}
 
