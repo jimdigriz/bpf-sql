@@ -15,8 +15,8 @@ struct bpf_insn bpf_insns[] = {
 	BPF_STMT(BPF_ALU+BPF_ADD+BPF_K, 1),
 	BPF_STMT(BPF_ST+BPF_REC, 2),
 
-	/* R[3] += R[1] */
-	BPF_STMT(BPF_LD+BPF_REC, 1),
+	/* R[3] += C[1] */
+	BPF_STMT(BPF_LD+BPF_ABS, 1),
 	BPF_STMT(BPF_MISC+BPF_TAX, 0),
 	BPF_STMT(BPF_LD+BPF_REC, 3),
 	BPF_STMT(BPF_ALU+BPF_ADD+BPF_X, 0),
