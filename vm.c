@@ -19,10 +19,6 @@
 
 #include "program.h"
 
-#define HACK_CSIZE 2 /* bpf_sql.ncols */
-#define HACK_KSIZE 2 /* bpf_sql.nkeys */
-#define HACK_RSIZE 2 /* bpf_sql.width */
-
 typedef struct {
 	int64_t r[HACK_KSIZE];
 } record_key_t;

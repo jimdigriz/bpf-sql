@@ -31,6 +31,10 @@ struct bpf_program bpf_prog = {
 	.bf_insns	= bpf_insns,
 };
 
+#define HACK_CSIZE 2 /* bpf_sql.ncols */
+#define HACK_KSIZE 2 /* bpf_sql.nkeys */
+#define HACK_RSIZE 2 /* bpf_sql.width */
+
 bpf_sql_t bpf_sql = {
 	.ncols	= 2,
 	.col	= {
