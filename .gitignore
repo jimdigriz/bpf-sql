@@ -7,3 +7,6 @@ gmon.out
 *.[do]
 *.gcda
 *.gcno
+
+*.gz
+*.bin
