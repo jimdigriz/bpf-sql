@@ -217,6 +217,11 @@ int run(const struct bpf_program *prog, record_t **G, const int64_t *C[HACK_SIZE
 
 			assert(R);
 
+			HASH_FIND(hh, *G, &R->key, sizeof(record_key_t), R_old);
+			if (R_old) {
+				HASH_DELETE(hh, *G, R_old);
+				free(R_old);
+			}
 			HASH_ADD(hh, *G, key, sizeof(record_key_t), R);
 
 			R = NULL;
