@@ -60,9 +60,10 @@ In roughly order of importance:
  * tool to generate mock data to experiment with
  * remove `HACK` and make everything more dynamic
  * improve the profiling support
+ * add stepping debugging support
  * frequency analysis
  * Venn statements
  * SQL to BPF converter
  * BPF optimiser
- * `posix_[mf]advise()` hints
+ * [`posix_madvise()`](http://www.freebsd.org/cgi/man.cgi?posix_madvise(2)) hints
  * investigate [bcolz](https://github.com/Blosc/bcolz)
