@@ -286,9 +286,13 @@ int main(int argc, char **argv, char *env[])
 	munmap(c[0], sb[0].st_size);
 	munmap(c[1], sb[1].st_size);
 
-	for(record_t *R = G; R != NULL; R = R->hh.next)
-		printf("%" PRId64 "\t%" PRId64 "\t%" PRId64 "\t%" PRId64 "\n",
-			be64toh(R->key.r[0]), be64toh(R->key.r[1]), be64toh(R->r[0]), be64toh(R->r[1]));
+	for(record_t *R = G; R != NULL; R = R->hh.next) {
+		for (int i = 0; i < bpf_sql.nkeys; i++)
+			printf("%" PRId64 "\t", be64toh(R->key.r[i]));
+		for (int i = 0; i < bpf_sql.width; i++)
+			printf("%" PRId64 "\t", be64toh(R->r[i]));
+		printf("\n");
+	}
 
 	return(EX_OK);
 }
