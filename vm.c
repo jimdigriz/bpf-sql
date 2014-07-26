@@ -214,6 +214,7 @@ int run(const bpf_sql_t *bs, record_t **G, const int64_t **C)
 				return 0;
 			}
 
+			assert(v == bs->nkeys + bs->width);
 			assert(R);
 
 			HASH_FIND(hh, *G, &R->key, sizeof(record_key_t), R_old);
