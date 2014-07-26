@@ -44,7 +44,7 @@ The following instructions have had their action slightly amended:
 
     BPF_RET           Non-zero adds/replaces R[] in G
 
-**N.B.** all operations are 64bit signed integers
+**N.B.** all operations are as 64bit signed integer math
 
 The following load/store/find `BPF_REC` (record) instructions have been added:
 
