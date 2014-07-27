@@ -84,7 +84,6 @@ int run(const bpf_sql_t *bpf_sql, const int64_t **C, record_t **R)
 				A = M[pc->k];
 				break;
 			case BPF_REC:
-				assert(*R);
 				assert(pc->k < bpf_sql->nkeys + bpf_sql->width);
 				A = (pc->k < bpf_sql->nkeys)
 					? be64toh((*R)->key.r[pc->k])
@@ -117,12 +116,6 @@ int run(const bpf_sql_t *bpf_sql, const int64_t **C, record_t **R)
 				break;
 			case BPF_REC:
 				assert(pc->k < bpf_sql->nkeys + bpf_sql->width);
-				if (!*R) {
-					*R = malloc(sizeof(record_t));
-					if (!*R)
-						error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "malloc(R)");
-					memset(*R, 0, sizeof(record_t));
-				}
 				if (pc->k < bpf_sql->nkeys)
 					(*R)->key.r[pc->k] = htobe64(A);
 				else
@@ -241,7 +234,6 @@ int run(const bpf_sql_t *bpf_sql, const int64_t **C, record_t **R)
 				A = X;
 				break;
 			case BPF_LDR:
-				assert(*R);
 				R_old = record_find(&(*R)->key);
 				if (R_old) {
 					free(*R);
@@ -254,7 +246,6 @@ int run(const bpf_sql_t *bpf_sql, const int64_t **C, record_t **R)
 		}
 	}
 
-	assert(!*R);
 	return 0;
 }
 
@@ -283,23 +274,29 @@ int main(int argc, char **argv, char *env[])
 	int nrows = sb[0].st_size/sizeof(int64_t);
 
 	const int64_t *C[HACK_CSIZE] = { c[0], c[1] };
+	record_t *R = NULL;
 	for (int r=0; r<nrows; r++, C[0]++, C[1]++) {
-		record_t *R = NULL;
 		int ret;
+
+		if (!R) {
+			R = malloc(sizeof(record_t));
+			if (!R)
+				error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "malloc(R)");
+			memset(R, 0, sizeof(record_t));
+		}
 
 		ret = run(&bpf_sql, C, &R);
 		if (ret < 0)
 			error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "ret < 0");
 
-		if (!ret) {
-			assert(!R);
+		if (!ret)
 			continue;
-		}
 
-		assert(R);
 		assert(ret == bpf_sql.nkeys + bpf_sql.width);
 
 		record_add(R);
+
+		R = NULL;
 	}
 
 	munmap(c[0], sb[0].st_size);
