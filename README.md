@@ -20,7 +20,7 @@ The on-disk format used for each column file is just a raw list of 64bit signed 
     cat input_data | perl -pe '$_ = pack "q>", (split /\s+/)[1]' > metric1.bin
     ...
 
-**N.B.** unsigned 64bit integer to signed 64bit integer is usually safe in that you should be able to cast them back, though only as long as you use the arithmetic operators wisely (ie. avoid `JMP_J{GT,EQ}` and `BPF_NEG`)
+**N.B.** unsigned 64bit integer to signed 64bit integer is usually safe in that you should be able to cast them back, though only as long as you use the arithmetic operators wisely (ie. avoid `JMP_JG[TE]` and `BPF_NEG`)
 
 ## Generating Fake Data
 
