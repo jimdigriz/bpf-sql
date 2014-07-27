@@ -1,5 +1,9 @@
 Some experiments in grafting a [Berkeley Packet Filter (BPF)](http://en.wikipedia.org/wiki/Berkeley_Packet_Filter) onto a [Column-oriented Database](http://en.wikipedia.org/wiki/Column-oriented_DBMS) and providing an SQL like interface to the user.
 
+Of course this results in some constraints.
+
+Treat the dataset as a spreadsheet where each column is an integer metric (use a [map](http://en.wikipedia.org/wiki/Associative_array) for strings) and represented by a separate file.  Each rows is a record where its metrics are found at the same location in each file.  This results in all the files having the same length and of course record count.
+
 # Preflight
 
     sudo apt-get install build-essential uthash-dev
@@ -9,8 +13,6 @@ Some experiments in grafting a [Berkeley Packet Filter (BPF)](http://en.wikipedi
     make
 
 # Data Preparation
-
-Imagine the dataset as a spreadsheet where each column is a integer metric (use a [map](http://en.wikipedia.org/wiki/Associative_array) for strings) represented by a separate file and the rows are records; this results in all the files having the same length (identical record count).  The metrics for record `R` is found at the same location in each file.
 
 The on-disk format used for each column file is just a raw list of 64bit signed integers stored in big-endian format, so when converting your own dataset you can use a tab separated input and some Perl to generate each metric file:
 
