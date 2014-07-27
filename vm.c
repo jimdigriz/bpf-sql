@@ -33,6 +33,23 @@ typedef struct {
 
 record_t *G = NULL;
 
+record_t *record_find(record_key_t *key) {
+	record_t *item;
+
+	HASH_FIND(hh, G, key, sizeof(record_key_t), item);
+	if (item)
+		HASH_DELETE(hh, G, item);
+
+	return item;
+}
+
+void record_add(record_t *record) {
+	record_t *old = record_find(&record->key);
+	if (old)
+		free(old);
+	HASH_ADD(hh, G, key, sizeof(record_key_t), record);
+}
+
 int run(const bpf_sql_t *bpf_sql, const int64_t **C, record_t **R)
 {
 	struct bpf_insn *pc = &bpf_sql->prog->bf_insns[0];
@@ -225,9 +242,8 @@ int run(const bpf_sql_t *bpf_sql, const int64_t **C, record_t **R)
 				break;
 			case BPF_LDR:
 				assert(*R);
-				HASH_FIND(hh, G, &(*R)->key, sizeof(record_key_t), R_old);
+				R_old = record_find(&(*R)->key);
 				if (R_old) {
-					HASH_DELETE(hh, G, R_old);
 					free(*R);
 					*R = R_old;
 				}
@@ -269,7 +285,6 @@ int main(int argc, char **argv, char *env[])
 	const int64_t *C[HACK_CSIZE] = { c[0], c[1] };
 	for (int r=0; r<nrows; r++, C[0]++, C[1]++) {
 		record_t *R = NULL;
-		record_t *R_old;
 		int ret;
 
 		ret = run(&bpf_sql, C, &R);
@@ -284,12 +299,7 @@ int main(int argc, char **argv, char *env[])
 		assert(R);
 		assert(ret == bpf_sql.nkeys + bpf_sql.width);
 
-		HASH_FIND(hh, G, &R->key, sizeof(record_key_t), R_old);
-		if (R_old) {
-			HASH_DELETE(hh, G, R_old);
-			free(R_old);
-		}
-		HASH_ADD(hh, G, key, sizeof(record_key_t), R);
+		record_add(R);
 	}
 
 	munmap(c[0], sb[0].st_size);
