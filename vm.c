@@ -31,7 +31,9 @@ typedef struct {
 	UT_hash_handle	hh;
 } record_t;
 
-int run(const bpf_sql_t *bpf_sql, record_t **G, const int64_t **C, record_t **R)
+record_t *G = NULL;
+
+int run(const bpf_sql_t *bpf_sql, const int64_t **C, record_t **R)
 {
 	struct bpf_insn *pc = &bpf_sql->prog->bf_insns[0];
 	int64_t A = 0;
@@ -223,9 +225,9 @@ int run(const bpf_sql_t *bpf_sql, record_t **G, const int64_t **C, record_t **R)
 				break;
 			case BPF_LDR:
 				assert(*R);
-				HASH_FIND(hh, *G, &(*R)->key, sizeof(record_key_t), R_old);
+				HASH_FIND(hh, G, &(*R)->key, sizeof(record_key_t), R_old);
 				if (R_old) {
-					HASH_DELETE(hh, *G, R_old);
+					HASH_DELETE(hh, G, R_old);
 					free(*R);
 					*R = R_old;
 				}
@@ -245,7 +247,6 @@ int main(int argc, char **argv, char *env[])
 	int cfd[bpf_sql.ncols];
 	struct stat sb[bpf_sql.ncols];
 	int64_t *c[bpf_sql.ncols];
-	record_t *G = NULL;
 
 	assert(bpf_sql.type == HASH);
 
@@ -271,7 +272,7 @@ int main(int argc, char **argv, char *env[])
 		record_t *R_old;
 		int ret;
 
-		ret = run(&bpf_sql, &G, C, &R);
+		ret = run(&bpf_sql, C, &R);
 		if (ret < 0)
 			error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "ret < 0");
 
