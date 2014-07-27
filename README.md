@@ -16,7 +16,7 @@ Lets get a tab seperated TIM,TV2NSPID sample:
 
 Break out each field and convert it to network ordered (big-endian) 64bit signed values:
 
-    # network order
+    # network order (uint64 -> int64 is preserved bitwise)
     zcat day16265.gz | perl -pe '$_ = pack "q>", (split /\s+/)[0]' > day16265.tim.bin
     zcat day16265.gz | perl -pe '$_ = pack "q>", (split /\s+/)[1]' > day16265.tv2nspid.bin
     ...
