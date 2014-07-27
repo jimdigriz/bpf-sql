@@ -36,7 +36,7 @@ The engine closely resembles the BPF filtering engine described in the [BSD BPF 
                       have the current row record data (akin to BPF's P[])
     R[]               RCOL x 64bit wide registers to create/replace records
 
-    G                 Global hash with all the results
+    G                 Global storage containing results
 
 The following instructions have had their action slightly amended:
 
@@ -52,7 +52,7 @@ The following load/store/find `BPF_REC` (record) instructions have been added:
     BPF_LD+BPF_REC    A <- R[k]
     BPF_ST+BPF_REC    R[k] <- A
 
-    BPF_MISC+BPF_LDR  Fetch R[] from G
+    BPF_MISC+BPF_LDR  Fetch R[] from G and remove it
 
 # TODO
 
@@ -63,8 +63,9 @@ In roughly order of importance:
  * improve the profiling support
  * add stepping debugging support
  * frequency analysis
- * Venn statements
+ * intersection analaysis (Venn)
  * SQL to BPF converter
  * BPF optimiser
  * [`posix_madvise()`](http://www.freebsd.org/cgi/man.cgi?posix_madvise(2)) hints
  * investigate [Blosc](http://www.blosc.org/) and its [c-blosc](https://github.com/Blosc/c-blosc) library
+ * go [Zipfian](http://en.wikipedia.org/wiki/Zipf's_law) and look into [HyperLogLog](http://research.neustar.biz/2012/10/25/sketch-of-the-day-hyperloglog-cornerstone-of-a-big-data-infrastructure/) and [K-minimun Values](http://research.neustar.biz/2012/07/09/sketch-of-the-day-k-minimum-values/)
