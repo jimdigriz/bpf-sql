@@ -4,6 +4,7 @@ typedef struct {
 	int			ncols;
 	char			col[10][100];
 
+	enum			{ INVALID, HASH } type;
 	int			nkeys;
 	int			width;
 

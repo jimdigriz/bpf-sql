@@ -262,6 +262,8 @@ int main(int argc, char **argv, char *env[])
 	int64_t *c[bpf_sql.ncols];
 	record_t *G = NULL;
 
+	assert(bpf_sql.type == HASH);
+
 	cfd[0] = open(bpf_sql.col[0], O_RDONLY);
 	fstat(cfd[0], &sb[0]);
 

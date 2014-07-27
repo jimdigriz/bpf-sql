@@ -44,6 +44,7 @@ bpf_sql_t bpf_sql = {
 			"day16265.tv2nspid.bin"
 	},
 
+	.type	= HASH,
 	.nkeys	= 2,
 	.width	= 2,
 
