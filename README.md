@@ -8,18 +8,29 @@ Some experiments in grafting a [Berkeley Packet Filter (BPF)](http://en.wikipedi
     cd bpf-sql
     make
 
-## Dry-Run
+# Data Preparation
 
-Lets get a tab seperated TIM,TV2NSPID sample:
+Imagine the dataset as a spreadsheet where each column is a integer metric (use a [map](http://en.wikipedia.org/wiki/Associative_array) for strings) represented by a separate file and the rows are records; this results in all the files having the same length (identical record count).  The metrics for record `R` is found at the same location in each file.
 
-    psp-read /psp-data/day16265/psval{TIM,TV2NSPID,...}.psp | gzip -c > day16265.gz
+The on-disk format used for each column file is just a raw list of 64bit signed integers stored in big-endian format, so when converting your own dataset you can use a tab separated input and some Perl to generate each metric file:
 
-Break out each field and convert it to network ordered (big-endian) 64bit signed values:
-
-    # network order (uint64 -> int64 is preserved bitwise)
-    zcat day16265.gz | perl -pe '$_ = pack "q>", (split /\s+/)[0]' > day16265.tim.bin
-    zcat day16265.gz | perl -pe '$_ = pack "q>", (split /\s+/)[1]' > day16265.tv2nspid.bin
+    cat input_data | perl -pe '$_ = pack "q>", (split /\s+/)[0]' > metric0.bin
+    cat input_data | perl -pe '$_ = pack "q>", (split /\s+/)[1]' > metric1.bin
     ...
+
+**N.B.** unsigned 64bit integer to signed 64bit integer is usually safe in that you should be able to cast them back, though only as long as you use the arithmetic operators wisely (ie. avoid `JMP_J{GT,EQ}` and `BPF_NEG`)
+
+## Generating Fake Data
+
+### Random
+
+The following will generate you roughly 1m/sec rows:
+
+    SIZE=8	# 1=8bit, 2=16bit, 4=32bit, 8=64bit
+    TYPE=d	# d=integer, u=unsigned int
+    NREC=10**8	# number of records you want (100m)
+
+    od -v -An -w$SIZE -t $TYPE$SIZE -N $((SIZE*NREC)) /dev/urandom
 
 # Engine
 
@@ -63,7 +74,7 @@ In roughly order of importance:
  * improve the profiling support
  * add stepping debugging support
  * frequency analysis
- * intersection analaysis (Venn)
+ * intersection analysis (Venn)
  * SQL to BPF converter
  * BPF optimiser
  * [`posix_madvise()`](http://www.freebsd.org/cgi/man.cgi?posix_madvise(2)) hints
