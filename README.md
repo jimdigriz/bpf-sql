@@ -81,7 +81,7 @@ In roughly order of importance:
  * BPF optimiser
  * [`posix_madvise()`](http://www.freebsd.org/cgi/man.cgi?posix_madvise(2)) hints
  * investigate [Blosc](http://www.blosc.org/) and its [c-blosc](https://github.com/Blosc/c-blosc) library
- * support an approximation 'turbo' [Zipfian](http://en.wikipedia.org/wiki/Zipf's_law) mode and do sketches:
-     * [https://sites.google.com/site/countminsketch/](Count-Min Sketch)
+ * support an approximation 'turbo' [Zipfian](http://en.wikipedia.org/wiki/Zipf's_law) mode and use [sketches](http://en.wikipedia.org/wiki/Sketch_(mathematics)):
+     * [Count-Min](https://sites.google.com/site/countminsketch/)
      * [K-minimun Values](http://research.neustar.biz/2012/07/09/sketch-of-the-day-k-minimum-values/)
      * [HyperLogLog](http://research.neustar.biz/2012/10/25/sketch-of-the-day-hyperloglog-cornerstone-of-a-big-data-infrastructure/)
