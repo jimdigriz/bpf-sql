@@ -31,13 +31,12 @@ typedef struct {
 	UT_hash_handle	hh;
 } record_t;
 
-int run(const bpf_sql_t *bs, record_t **G, const int64_t **C)
+int run(const bpf_sql_t *bpf_sql, record_t **G, const int64_t **C, record_t **R)
 {
-	struct bpf_insn *pc = &bs->prog->bf_insns[0];
+	struct bpf_insn *pc = &bpf_sql->prog->bf_insns[0];
 	int64_t A = 0;
 	int64_t X = 0;
 	int64_t M[BPF_MEMWORDS] = {0};
-	record_t *R = NULL;
 	record_t *R_old;
 	
 	--pc;
@@ -51,11 +50,11 @@ int run(const bpf_sql_t *bs, record_t **G, const int64_t **C)
 
 			switch (BPF_MODE(pc->code)) {
 			case BPF_ABS:
-				assert(pc->k < bs->ncols);
+				assert(pc->k < bpf_sql->ncols);
 				A = be64toh(*C[pc->k]);
 				break;
 			case BPF_IND:
-				assert(X + pc->k < bs->ncols);
+				assert(X + pc->k < bpf_sql->ncols);
 				A = be64toh(*C[X + pc->k]);
 				break;
 			case BPF_IMM:
@@ -66,11 +65,11 @@ int run(const bpf_sql_t *bs, record_t **G, const int64_t **C)
 				A = M[pc->k];
 				break;
 			case BPF_REC:
-				assert(R);
-				assert(pc->k < bs->nkeys + bs->width);
-				A = (pc->k < bs->nkeys)
-					? be64toh(R->key.r[pc->k])
-					: be64toh(R->r[pc->k - bs->nkeys]);
+				assert(*R);
+				assert(pc->k < bpf_sql->nkeys + bpf_sql->width);
+				A = (pc->k < bpf_sql->nkeys)
+					? be64toh((*R)->key.r[pc->k])
+					: be64toh((*R)->r[pc->k - bpf_sql->nkeys]);
 				break;
 			default:
 				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "LD: UNKNOWN MODE");
@@ -98,17 +97,17 @@ int run(const bpf_sql_t *bs, record_t **G, const int64_t **C)
 				M[pc->k] = A;
 				break;
 			case BPF_REC:
-				assert(pc->k < bs->nkeys + bs->width);
-				if (!R) {
-					R = malloc(sizeof(record_t));
-					if (!R)
+				assert(pc->k < bpf_sql->nkeys + bpf_sql->width);
+				if (!*R) {
+					*R = malloc(sizeof(record_t));
+					if (!*R)
 						error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "malloc(R)");
-					memset(R, 0, sizeof(record_t));
+					memset(*R, 0, sizeof(record_t));
 				}
-				if (pc->k < bs->nkeys)
-					R->key.r[pc->k] = htobe64(A);
+				if (pc->k < bpf_sql->nkeys)
+					(*R)->key.r[pc->k] = htobe64(A);
 				else
-					R->r[pc->k - bs->nkeys] = htobe64(A);
+					(*R)->r[pc->k - bpf_sql->nkeys] = htobe64(A);
 				break;
 			default:
 				error_at_line(EX_DATAERR, 0, __FILE__, __LINE__, "ST: UNKNOWN MODE");
@@ -209,23 +208,6 @@ int run(const bpf_sql_t *bs, record_t **G, const int64_t **C)
 				break;
 			}
 
-			if (!v) {
-				assert(!R);
-				return 0;
-			}
-
-			assert(v == bs->nkeys + bs->width);
-			assert(R);
-
-			HASH_FIND(hh, *G, &R->key, sizeof(record_key_t), R_old);
-			if (R_old) {
-				HASH_DELETE(hh, *G, R_old);
-				free(R_old);
-			}
-			HASH_ADD(hh, *G, key, sizeof(record_key_t), R);
-
-			R = NULL;
-
 			return v;
 		case BPF_MISC:
 			switch (BPF_MISCOP(pc->code)) {
@@ -236,12 +218,12 @@ int run(const bpf_sql_t *bs, record_t **G, const int64_t **C)
 				A = X;
 				break;
 			case BPF_LDR:
-				assert(R);
-				HASH_FIND(hh, *G, &R->key, sizeof(record_key_t), R_old);
+				assert(*R);
+				HASH_FIND(hh, *G, &(*R)->key, sizeof(record_key_t), R_old);
 				if (R_old) {
 					HASH_DELETE(hh, *G, R_old);
-					free(R);
-					R = R_old;
+					free(*R);
+					*R = R_old;
 				}
 			}
 			break;
@@ -249,8 +231,6 @@ int run(const bpf_sql_t *bs, record_t **G, const int64_t **C)
 			error_at_line(EX_UNAVAILABLE, 0, __FILE__, __LINE__, "UNKNOWN CLASS");
 		}
 	}
-
-	assert(!R);
 
 	return 0;
 }
@@ -282,8 +262,27 @@ int main(int argc, char **argv, char *env[])
 
 	const int64_t *C[HACK_CSIZE] = { c[0], c[1] };
 	for (int r=0; r<nrows; r++, C[0]++, C[1]++) {
-		int ret = run(&bpf_sql, &G, C);
+		record_t *R = NULL;
+		record_t *R_old;
+		int ret;
+
+		ret = run(&bpf_sql, &G, C, &R);
 		assert(ret > -1);
+
+		if (!ret) {
+			assert(!R);
+			continue;
+		}
+
+		assert(R);
+		assert(ret == bpf_sql.nkeys + bpf_sql.width);
+
+		HASH_FIND(hh, G, &R->key, sizeof(record_key_t), R_old);
+		if (R_old) {
+			HASH_DELETE(hh, G, R_old);
+			free(R_old);
+		}
+		HASH_ADD(hh, G, key, sizeof(record_key_t), R);
 	}
 
 	munmap(c[0], sb[0].st_size);
