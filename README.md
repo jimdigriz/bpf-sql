@@ -77,10 +77,16 @@ In roughly order of importance:
  * add stepping debugging support
  * frequency analysis
  * intersection analysis (Venn)
+ * alternative engine primitives, BPF not well suited due to all the indirects?
+     * [colorForth](http://www.colorforth.com/forth.html)
+     * [Subroutine threading](http://www.cs.toronto.edu/~matz/dissertation/matzDissertation-latex2html/node7.html) especially [Speed of various interpreter dispatch techniques](http://www.complang.tuwien.ac.at/forth/threading/)
  * SQL to BPF converter
  * BPF checker to simplify the engine
  * BPF optimiser
- * [`posix_madvise()`](http://www.freebsd.org/cgi/man.cgi?posix_madvise(2)) hints
+ * steroids:
+     * [`posix_madvise()`](http://www.freebsd.org/cgi/man.cgi?posix_madvise(2))
+     * [GCC Optimization's](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html)
+     * [`__builtin_prefetch`](https://gcc.gnu.org/onlinedocs/gcc-3.3.6/gcc/Other-Builtins.html#index-g_t_005f_005fbuiltin_005fprefetch-1861)
  * investigate [Blosc](http://www.blosc.org/) and its [c-blosc](https://github.com/Blosc/c-blosc) library
  * support an approximation 'turbo' [Zipfian](http://en.wikipedia.org/wiki/Zipf's_law) mode and use [sketches](http://en.wikipedia.org/wiki/Sketch_(mathematics)):
      * [Count-Min](https://sites.google.com/site/countminsketch/)
