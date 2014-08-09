@@ -44,7 +44,7 @@ help:
 distclean: clean
 
 clean:
-	rm -f $(TARGETS) $(SOURCES:.c=.o) $(SOURCES:.c=.d) gmon.out *.gcov *.gcda *.gcno
+	rm -f $(TARGETS) *.o *.d gmon.out *.gcov *.gcda *.gcno
 
 vm: $(SOURCES:.c=.o)
 
