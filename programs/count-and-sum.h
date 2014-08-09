@@ -40,8 +40,8 @@ struct bpf_program bpf_prog = {
 bpf_sql_t bpf_sql = {
 	.ncols	= 2,
 	.col	= {
-			"day16265.tim.bin",
-			"day16265.tv2nspid.bin"
+			"sample-data/day16265.tim.bin",
+			"sample-data/day16265.tv2nspid.bin"
 	},
 
 	.type	= HASH,
