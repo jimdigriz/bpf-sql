@@ -60,7 +60,7 @@ record_t *data_fetch(data_t **node, int64_t *r, int nr, int nd)
 			return &(*node)->R[0];
 		}
 
-		if ((*node)->k == key) {
+		if ((*node)->nR && (*node)->k == key) {
 			int n;
 
 			for (n = 0; n < (*node)->nR; n++)
@@ -73,7 +73,7 @@ record_t *data_fetch(data_t **node, int64_t *r, int nr, int nd)
 			return &(*node)->R[n];
 		}
 
-		if ((*node)->k) {
+		if ((*node)->nR) {
 			tnode = data_newnode();
 
 			tnode->k = (*node)->k;
