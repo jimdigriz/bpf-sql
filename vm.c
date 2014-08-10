@@ -19,7 +19,8 @@
 
 #include "program.h"
 
-data_t *G, *R_mem;
+data_t *G;
+data_t R_mem;
 
 static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 {
@@ -27,7 +28,7 @@ static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 	int64_t A = 0;
 	int64_t X = 0;
 	int64_t M[BPF_MEMWORDS] = {0};
-	data_t *R = R_mem;
+	data_t *R = &R_mem;
 
 	--pc;
 	while (1) {
@@ -242,8 +243,7 @@ int main(int argc, char **argv, char *env[])
 	int nrows = sb[0].st_size/sizeof(int64_t);
 	const int64_t *C[HACK_CSIZE] = { c[0], c[1] };
 
-	R_mem = data_newnode();
-	data_newpayload(R_mem, bpf_sql.nkeys, bpf_sql.width);
+	data_newpayload(&R_mem, bpf_sql.nkeys, bpf_sql.width);
 
 	for (int r=0; r<nrows; r++, C[0]++, C[1]++) {
 		int ret;

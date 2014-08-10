@@ -41,7 +41,7 @@ data_t *data_fetch(data_t **node, int64_t *r, int nr, int nd)
 	data_t *tnode = NULL;
 	int h = 0;
 
-	MurmurHash3_128((const char *)r, nr*sizeof(int64_t), 0, &hash);
+	MurmurHash3_128(r, nr*sizeof(int64_t), 0, &hash);
 	key = hash[0] + ((uint64_t)hash[1] << 32);
 
 	while (1) {
