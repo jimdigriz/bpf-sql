@@ -48,7 +48,9 @@ record_t *data_fetch(data_t **node, int64_t *r, int nr, int nd)
 	data_t *tnode;
 	int h = 0;
 
-	key = murmur3_32((char *)r, nr*sizeof(int64_t), 0);
+	key = (nr == 1)
+		? nr
+		: murmur3_32((char *)r, nr*sizeof(int64_t), 0);
 
 	while (1) {
 		if (!*node) {
