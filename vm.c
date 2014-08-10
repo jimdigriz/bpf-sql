@@ -108,12 +108,14 @@ static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 			break;
 		case BPF_ALU:
 			switch (BPF_SRC(pc->code)) {
+			case BPF_K:
+				v = pc->k;
+				break;
 			case BPF_X:
 				v = X;
 				break;
-			default: /* BPF_K */
-				v = pc->k;
-				break;
+			default:
+				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "ALU: UNKNOWN SRC");
 			}
 
 			switch (BPF_OP(pc->code)) {
