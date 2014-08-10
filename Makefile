@@ -16,7 +16,7 @@ endif
 ifdef NDEBUG
 	CFLAGS	+= -DNDEBUG -O3
 else
-	CFLAGS	+= -g3
+	CFLAGS	+= -g3 -fstack-protector-all
 endif
 
 # better stripping
