@@ -218,6 +218,15 @@ static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 	}
 }
 
+void print_cb(const record_t *R)
+{
+	for (int i = 0; i < bpf_sql.nkeys; i++)
+		printf("%" PRId64 "\t", be64toh(R->r[i]));
+	for (int i = 0; i < bpf_sql.width; i++)
+		printf("%" PRId64 "\t", be64toh(R->d[i]));
+	printf("\n");
+}
+
 int main(int argc, char **argv, char *env[])
 {
 	int cfd[bpf_sql.ncols];
@@ -253,15 +262,7 @@ int main(int argc, char **argv, char *env[])
 	munmap(c[0], sb[0].st_size);
 	munmap(c[1], sb[1].st_size);
 
-	for(int r = 0; r < NTRACK; r++) {
-		record_t *R = TRACK[r];
-
-		for (int i = 0; i < bpf_sql.nkeys; i++)
-			printf("%" PRId64 "\t", be64toh(R->r[i]));
-		for (int i = 0; i < bpf_sql.width; i++)
-			printf("%" PRId64 "\t", be64toh(R->d[i]));
-		printf("\n");
-	}
+	data_iterate(G, print_cb);
 
 	return(EX_OK);
 }

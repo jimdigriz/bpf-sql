@@ -23,9 +23,12 @@ struct data_t {
 };
 typedef struct data_t data_t;
 
-extern int NTRACK;
-extern record_t **TRACK;
+struct path {
+	data_t	*d;
+	int	o;
+};
 
 data_t *data_newnode(void);
 void data_newrecord(data_t *, int, int);
 record_t *data_fetch(data_t **, int64_t *, int, int);
+void data_iterate(data_t *, void (*)(const record_t *));

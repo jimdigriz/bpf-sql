@@ -73,7 +73,6 @@ In roughly order of importance:
 
  * tool to generate mock data to experiment with
  * remove `HACK` and make everything more dynamic
- * remove TRACK/NTRACK walking hack
  * improve the profiling support
  * add stepping debugging support
  * frequency analysis

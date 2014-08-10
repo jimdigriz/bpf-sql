@@ -20,50 +20,23 @@ data_t *data_newnode(void)
 	return d;
 }
 
-int NTRACK = 0;
-record_t **TRACK = NULL;
-
-void data_newrecord(data_t *d, int nr, int nd)
+void data_newrecord(data_t *node, int nr, int nd)
 {
-	int n = d->nR;
-	int r = -1;
+	int n = node->nR;
 
-	if (d->R) {
-		for (r = 0; r < NTRACK; r++)
-			for (int i = 0; i < n; i++)
-				if (TRACK[r] == &d->R[i])
-					TRACK[r] = 0;
-	}
+	node->R = realloc(node->R, (n+1) * sizeof(record_t));
+	if (!node->R)
+		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "realloc(node->R)");
 
-	d->R = realloc(d->R, (n+1) * sizeof(record_t));
-	if (!d->R)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "realloc(d->R)");
+	node->R[n].r = calloc(nr, sizeof(int64_t));
+	if (!node->R[n].r)
+		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(node->R[n].r)");
 
-	if (r != -1) {
-		r = 0;
-		for (int i = 0; i < n; i++)
-			for (; r < NTRACK; r++)
-				if (TRACK[r] == 0) {
-					TRACK[r] = &d->R[i];
-					break;
-				}
-	}
-	
-	TRACK = realloc(TRACK, (NTRACK+1)*sizeof(record_t *));
-	if (!TRACK)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "realloc(TRACK)");
-	TRACK[NTRACK] = &d->R[n];
-	NTRACK++;
+	node->R[n].d = calloc(nd, sizeof(int64_t));
+	if (!node->R[n].d)
+		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(node->R[n].d)");
 
-	d->R[n].r = calloc(nr, sizeof(int64_t));
-	if (!d->R[n].r)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(d->R[n].r)");
-
-	d->R[n].d = calloc(nd, sizeof(int64_t));
-	if (!d->R[n].d)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(d->R[n].d)");
-
-	d->nR++;
+	node->nR++;
 }
 
 record_t *data_fetch(data_t **node, int64_t *r, int nr, int nd)
@@ -118,5 +91,33 @@ record_t *data_fetch(data_t **node, int64_t *r, int nr, int nd)
 
 		node = &(*node)->c[(key >> (CMASK*h)) & ((1<<CMASK)-1)];
 		h++;
+	}
+}
+
+void data_iterate(data_t *node, void (*cb)(const record_t *))
+{
+	struct path path[KEYSIZE/CMASK];
+	int h = 0;
+
+	path[0].d = node;
+	path[0].o = 0;
+
+	while (h > -1) {
+		if (path[h].d->k) {
+			for (int n = 0; n < path[h].d->nR; n++)
+				cb(&path[h].d->R[n]);
+		} else {
+			for (; path[h].o < KEYSIZE/CMASK; path[h].o++) {
+				if (path[h].d->c[path[h].o]) {
+					path[h+1].d = path[h].d->c[path[h].o];
+					path[h+1].o = 0;
+					h++;
+				}
+			}
+		}
+
+		path[h].d = NULL;
+		path[h].o = 0;
+		h--;
 	}
 }
