@@ -103,17 +103,21 @@ void data_iterate(data_t *node, void (*cb)(const record_t *))
 	path[0].o = 0;
 
 	while (h > -1) {
-		if (path[h].d->k) {
-			for (int n = 0; n < path[h].d->nR; n++)
-				cb(&path[h].d->R[n]);
-		} else {
-			for (; path[h].o < KEYSIZE/CMASK; path[h].o++) {
-				if (path[h].d->c[path[h].o]) {
-					path[h+1].d = path[h].d->c[path[h].o];
-					path[h+1].o = 0;
-					h++;
-				}
+		for (; path[h].o < KEYSIZE/CMASK; path[h].o++) {
+			if (path[h].d->k) {
+				for (int n = 0; n < path[h].d->nR; n++)
+					cb(&path[h].d->R[n]);
+				break;
 			}
+
+			if (!path[h].d->c[path[h].o])
+				continue;
+
+			path[h+1].d = path[h].d->c[path[h].o];
+			path[h+1].o = -1;
+
+			path[h].o++;
+			h++;
 		}
 
 		path[h].d = NULL;
