@@ -20,7 +20,7 @@
 #include "program.h"
 
 data_t *G;
-data_t R_mem;
+data_t D;
 
 static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 {
@@ -28,12 +28,12 @@ static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 	int64_t A = 0;
 	int64_t X = 0;
 	int64_t M[BPF_MEMWORDS] = {0};
-	data_t *R = &R_mem;
+	record_t *R = &D.R[0];
 
-	--pc;
+	pc--;
 	while (1) {
 		int64_t v;
-		++pc;
+		pc++;
 
 		switch (BPF_CLASS(pc->code)) {
 		case BPF_LD:
@@ -216,8 +216,6 @@ static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 			error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "UNKNOWN CLASS");
 		}
 	}
-
-	return 0;
 }
 
 int main(int argc, char **argv, char *env[])
@@ -243,7 +241,7 @@ int main(int argc, char **argv, char *env[])
 	int nrows = sb[0].st_size/sizeof(int64_t);
 	const int64_t *C[HACK_CSIZE] = { c[0], c[1] };
 
-	data_newpayload(&R_mem, bpf_sql.nkeys, bpf_sql.width);
+	data_newrecord(&D, bpf_sql.nkeys, bpf_sql.width);
 
 	for (int r=0; r<nrows; r++, C[0]++, C[1]++) {
 		int ret;
@@ -255,8 +253,8 @@ int main(int argc, char **argv, char *env[])
 	munmap(c[0], sb[0].st_size);
 	munmap(c[1], sb[1].st_size);
 
-	for(int d = 0; d < NTRACK; d++) {
-		data_t *R = TRACK[d];
+	for(int r = 0; r < NTRACK; r++) {
+		record_t *R = TRACK[r];
 
 		for (int i = 0; i < bpf_sql.nkeys; i++)
 			printf("%" PRId64 "\t", be64toh(R->r[i]));
