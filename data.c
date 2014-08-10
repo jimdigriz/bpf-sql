@@ -38,7 +38,7 @@ data_t *data_fetch(data_t **node, int64_t *r, int nr, int nd)
 {
 	uint32_t hash[4];
 	uint64_t key;
-	data_t *tnode = NULL;
+	data_t *tnode;
 	int h = 0;
 
 	MurmurHash3_128(r, nr*sizeof(int64_t), 0, &hash);
@@ -72,8 +72,8 @@ data_t *data_fetch(data_t **node, int64_t *r, int nr, int nd)
 
 			(*node)->k = 0;
 			(*node)->c[(tnode->k >> (CMASK*h)) & ((2<<CMASK)-1)] = tnode;
-			(*node)->r = 0;
-			(*node)->d = 0;
+			(*node)->r = NULL;
+			(*node)->d = NULL;
 
 			for (int i = 0; i<NTRACK; i++) {
 				if (TRACK[i] == *node) {
@@ -83,7 +83,6 @@ data_t *data_fetch(data_t **node, int64_t *r, int nr, int nd)
 			}
 		}
 
-		tnode = *node;
 		node = &((*node)->c[(key >> (CMASK*h)) & ((2<<CMASK)-1)]);
 		h++;
 	}
