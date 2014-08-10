@@ -15,7 +15,6 @@ typedef struct {
 struct data_t {
 	uint32_t	k;
 
-	/* 20% CPU hit, but 30% RAM saving for 10m records */
 	struct data_t	**c;
 
 	int		nR;
