@@ -7,7 +7,7 @@ struct bpf_insn bpf_insns[] = {
 	/* A = C[1] */
 	BPF_STMT(BPF_LD+BPF_ABS, 1),
 
-	/* NOOP */
+	/* finished */
 	BPF_STMT(BPF_RET+BPF_K, 0),
 };
 
@@ -17,8 +17,6 @@ struct bpf_program bpf_prog = {
 };
 
 #define HACK_CSIZE 2 /* bpf_sql.ncols */
-#define HACK_KSIZE 1 /* bpf_sql.nkeys */
-#define HACK_RSIZE 1 /* bpf_sql.width */
 
 bpf_sql_t bpf_sql = {
 	.ncols	= 2,
@@ -27,7 +25,6 @@ bpf_sql_t bpf_sql = {
 			"sample-data/day16265.tv2nspid.bin"
 	},
 
-	.type	= HASH,
 	.nkeys	= 1,
 	.width	= 1,
 

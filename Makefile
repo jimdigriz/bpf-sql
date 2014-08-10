@@ -27,7 +27,7 @@ endif
 LDFLAGS	+= -Wl,--gc-sections
 
 TARGETS = vm
-SOURCES = vm.c
+SOURCES = vm.c data.c murmur3.c
 
 all: $(TARGETS)
 
@@ -44,7 +44,7 @@ help:
 distclean: clean
 
 clean:
-	rm -f $(TARGETS) *.o *.d gmon.out *.gcov *.gcda *.gcno
+	rm -f $(TARGETS) *.o *.d *.d.* gmon.out *.gcov *.gcda *.gcno
 
 vm: $(SOURCES:.c=.o)
 

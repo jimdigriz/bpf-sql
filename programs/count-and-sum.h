@@ -24,8 +24,8 @@ struct bpf_insn bpf_insns[] = {
 	BPF_STMT(BPF_ALU+BPF_ADD+BPF_X, 0),
 	BPF_STMT(BPF_ST+BPF_REC, 3),
 
-	/* store in G */
-	BPF_STMT(BPF_RET+BPF_K, 4),
+	/* finished */
+	BPF_STMT(BPF_RET+BPF_K, 0),
 };
 
 struct bpf_program bpf_prog = {
@@ -34,8 +34,6 @@ struct bpf_program bpf_prog = {
 };
 
 #define HACK_CSIZE 2 /* bpf_sql.ncols */
-#define HACK_KSIZE 2 /* bpf_sql.nkeys */
-#define HACK_RSIZE 2 /* bpf_sql.width */
 
 bpf_sql_t bpf_sql = {
 	.ncols	= 2,
@@ -44,7 +42,6 @@ bpf_sql_t bpf_sql = {
 			"sample-data/day16265.tv2nspid.bin"
 	},
 
-	.type	= HASH,
 	.nkeys	= 2,
 	.width	= 2,
 

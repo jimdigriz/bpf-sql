@@ -10,45 +10,16 @@
 #include <endian.h>
 #include <sysexits.h>
 #include <error.h>
-#include <uthash.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
 #include "bpf-sql.h"
+#include "data.h"
 
 #include "program.h"
 
-typedef struct {
-	int64_t r[HACK_KSIZE];
-} record_key_t;
-
-typedef struct {
-	UT_hash_handle	hh;
-
-	record_key_t	key;
-
-	int64_t		r[HACK_RSIZE];	
-} record_t;
-
-static record_t *G,*R;
-
-static record_t *record_find(record_key_t *key) {
-	record_t *item;
-
-	HASH_FIND(hh, G, key, sizeof(record_key_t), item);
-	if (item)
-		HASH_DELETE(hh, G, item);
-
-	return item;
-}
-
-static void record_add(record_t *record) {
-	record_t *old = record_find(&record->key);
-	if (old)
-		free(old);
-	HASH_ADD(hh, G, key, sizeof(record_key_t), record);
-}
+data_t *G, *R_mem;
 
 static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 {
@@ -56,8 +27,8 @@ static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 	int64_t A = 0;
 	int64_t X = 0;
 	int64_t M[BPF_MEMWORDS] = {0};
-	record_t *R_old;
-	
+	data_t *R = R_mem;
+
 	--pc;
 	while (1) {
 		int64_t v;
@@ -86,8 +57,8 @@ static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 			case BPF_REC:
 				assert(pc->k < bpf_sql->nkeys + bpf_sql->width);
 				A = (pc->k < bpf_sql->nkeys)
-					? be64toh(R->key.r[pc->k])
-					: be64toh(R->r[pc->k - bpf_sql->nkeys]);
+					? be64toh(R->r[pc->k])
+					: be64toh(R->d[pc->k - bpf_sql->nkeys]);
 				break;
 			default:
 				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "LD: UNKNOWN MODE");
@@ -117,9 +88,9 @@ static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 			case BPF_REC:
 				assert(pc->k < bpf_sql->nkeys + bpf_sql->width);
 				if (pc->k < bpf_sql->nkeys)
-					R->key.r[pc->k] = htobe64(A);
+					R->r[pc->k] = htobe64(A);
 				else
-					R->r[pc->k - bpf_sql->nkeys] = htobe64(A);
+					R->d[pc->k - bpf_sql->nkeys] = htobe64(A);
 				break;
 			default:
 				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "ST: UNKNOWN MODE");
@@ -234,11 +205,8 @@ static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 				A = X;
 				break;
 			case BPF_LDR:
-				R_old = record_find(&R->key);
-				if (R_old) {
-					free(R);
-					R = R_old;
-				}
+				R = data_fetch(&G, R->r, bpf_sql->nkeys, bpf_sql->width);
+				break;
 			}
 			break;
 		default:
@@ -249,20 +217,11 @@ static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 	return 0;
 }
 
-static void newR(void)
-{
-	R = calloc(1, sizeof(record_t));
-	if (!R)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(R)");
-}
-
 int main(int argc, char **argv, char *env[])
 {
 	int cfd[bpf_sql.ncols];
 	struct stat sb[bpf_sql.ncols];
 	int64_t *c[bpf_sql.ncols];
-
-	assert(bpf_sql.type == HASH);
 
 	cfd[0] = open(bpf_sql.col[0], O_RDONLY);
 	fstat(cfd[0], &sb[0]);
@@ -279,29 +238,28 @@ int main(int argc, char **argv, char *env[])
 	close(cfd[1]);
 
 	int nrows = sb[0].st_size/sizeof(int64_t);
-
 	const int64_t *C[HACK_CSIZE] = { c[0], c[1] };
-	newR();
+
+	R_mem = data_newnode();
+	data_newpayload(R_mem, bpf_sql.nkeys, bpf_sql.width);
+
 	for (int r=0; r<nrows; r++, C[0]++, C[1]++) {
 		int ret;
 
 		ret = run(&bpf_sql, C);
-		assert(ret >= 0);
-
-		if (ret) {
-			assert(ret == bpf_sql.nkeys + bpf_sql.width);
-			record_add(R), newR();
-		}
+		assert(ret == 0);
 	}
 
 	munmap(c[0], sb[0].st_size);
 	munmap(c[1], sb[1].st_size);
 
-	for(record_t *R = G; R != NULL; R = R->hh.next) {
+	for(int d = 0; d < NTRACK; d++) {
+		data_t *R = TRACK[d];
+
 		for (int i = 0; i < bpf_sql.nkeys; i++)
-			printf("%" PRId64 "\t", be64toh(R->key.r[i]));
-		for (int i = 0; i < bpf_sql.width; i++)
 			printf("%" PRId64 "\t", be64toh(R->r[i]));
+		for (int i = 0; i < bpf_sql.width; i++)
+			printf("%" PRId64 "\t", be64toh(R->d[i]));
 		printf("\n");
 	}
 

@@ -6,7 +6,7 @@ Treat the dataset as a spreadsheet where each column is an integer metric (use a
 
 # Preflight
 
-    sudo apt-get install build-essential uthash-dev
+    sudo apt-get install build-essential
     
     git clone https://github.com/jimdigriz/bpf-sql.git
     cd bpf-sql
@@ -56,7 +56,7 @@ The following instructions have had their action slightly amended:
     BPF_LD+BPF_ABS    A <- C[k]
     BPF_LD+BPF_IND    A <- C[X + k]
 
-    BPF_RET           Non-zero adds/replaces R[] in G
+    BPF_RET           Always returns zero
 
 **N.B.** all operations are as 64bit signed integer math
 
@@ -65,7 +65,7 @@ The following load/store/find `BPF_REC` (record) instructions have been added:
     BPF_LD+BPF_REC    A <- R[k]
     BPF_ST+BPF_REC    R[k] <- A
 
-    BPF_MISC+BPF_LDR  Fetch R[] from G and remove it
+    BPF_MISC+BPF_LDR  Load R[] (created if it does not exist) from G
 
 # TODO
 
@@ -73,6 +73,7 @@ In roughly order of importance:
 
  * tool to generate mock data to experiment with
  * remove `HACK` and make everything more dynamic
+ * remove TRACK/NTRACK walking hack
  * improve the profiling support
  * add stepping debugging support
  * frequency analysis
