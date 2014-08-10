@@ -70,21 +70,22 @@ record_t *data_fetch(data_t **node, int64_t *r, int nr, int nd)
 		}
 
 		if ((*node)->k == key) {
-			for (int i = 0; i<(*node)->nR; i++) {
-				if (memcmp((*node)->R[i].r, r, nr*sizeof(int64_t)) == 0)
-					return &(*node)->R[i];
-			}
+			int n;
+
+			for (n = 0; n < (*node)->nR; n++)
+				if (!memcmp((*node)->R[n].r, r, nr*sizeof(int64_t)))
+					return &(*node)->R[n];
 
 			data_newrecord(*node, nr, nd);
-			memcpy((*node)->R[(*node)->nR-1].r, r, nr*sizeof(int64_t));
+			memcpy((*node)->R[n].r, r, nr*sizeof(int64_t));
 
 			TRACK = realloc(TRACK, (NTRACK+1)*sizeof(record_t *));
 			if (!TRACK)
 				error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "realloc(TRACK)");
-			TRACK[NTRACK] = &(*node)->R[(*node)->nR-1];
+			TRACK[NTRACK] = &(*node)->R[n];
 			NTRACK++;
 
-			return &(*node)->R[(*node)->nR-1];
+			return &(*node)->R[n];
 		}
 
 		if ((*node)->k) {

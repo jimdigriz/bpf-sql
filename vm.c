@@ -243,7 +243,7 @@ int main(int argc, char **argv, char *env[])
 
 	data_newrecord(&D, bpf_sql.nkeys, bpf_sql.width);
 
-	for (int r=0; r<nrows; r++, C[0]++, C[1]++) {
+	for (int r=0; r < nrows; r++, C[0]++, C[1]++) {
 		int ret;
 
 		ret = run(&bpf_sql, C);
