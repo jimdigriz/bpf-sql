@@ -94,21 +94,21 @@ record_t *data_fetch(data_t **node, int64_t *r, int nr, int nd)
 
 void data_iterate(data_t *node, void (*cb)(const record_t *))
 {
-	struct path path[KEYSIZE/CMASK];
+	struct path path[(KEYSIZE/CMASK) + 1];
 	int h = 0;
 
 	path[0].d = node;
 	path[0].o = 0;
 
 	while (h > -1) {
-		if (path[h].d->k) {
+		if (path[h].d->nR) {
 			for (int n = 0; n < path[h].d->nR; n++)
 				cb(&path[h].d->R[n]);
 			h--;
 			continue;
 		}
 
-		while (path[h].o < KEYSIZE/CMASK) {
+		while (path[h].o < 1<<CMASK) {
 			data_t *d = path[h].d->c[path[h].o];
 
 			path[h].o++;
@@ -122,7 +122,7 @@ void data_iterate(data_t *node, void (*cb)(const record_t *))
 			break;
 		}
 
-		if (path[h].o == KEYSIZE/CMASK)
+		if (path[h].o == 1<<CMASK)
 			h--;
 	}
 }
