@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#define	CMASK	4
+#define	CMASK	4	/* 4 gives good speed and sane RAM usage */
 #define KEYSIZE	32	/* int32_t */
 
 #if KEYSIZE % CMASK
@@ -15,7 +15,8 @@ typedef struct {
 struct data_t {
 	uint32_t	k;
 
-	struct data_t	*c[1<<CMASK];
+	/* 20% CPU hit, but 30% RAM saving for 10m records */
+	struct data_t	**c;
 
 	int		nR;
 	record_t	*R;
