@@ -264,10 +264,9 @@ int main(int argc, char **argv, char *env[])
 		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(G.c)");
 
 	for (int r=0; r < nrows; r++, C[0]++, C[1]++) {
-		int ret;
-
-		ret = run(&bpf_sql, C);
-		assert(ret == 0);
+		int ret = run(&bpf_sql, C);
+		if (ret)
+			error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "run(r=%d) != 0", r);
 	}
 
 	munmap(c[0], sb[0].st_size);
