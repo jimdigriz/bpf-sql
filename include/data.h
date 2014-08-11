@@ -29,5 +29,5 @@ struct path {
 
 data_t *data_newnode(void);
 void data_newrecord(data_t *, int, int);
-record_t *data_fetch(data_t **, int64_t *, int, int);
+record_t *data_fetch(data_t *, int64_t *, int, int);
 void data_iterate(data_t *, void (*)(const record_t *));

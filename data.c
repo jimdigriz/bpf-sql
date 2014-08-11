@@ -39,56 +39,66 @@ void data_newrecord(data_t *node, int nr, int nd)
 	node->nR++;
 }
 
-record_t *data_fetch(data_t **node, int64_t *r, int nr, int nd)
+record_t *data_fetch(data_t *node, int64_t *r, int nr, int nd)
 {
 	uint32_t key;
+	data_t **nptr;
 	data_t *tnode;
 	int h = 0;
 
 	key = murmur3_32((char *)r, nr*sizeof(int64_t), 0);
 
 	while (1) {
-		if (!*node) {
-			*node = data_newnode();
-			(*node)->k = key;
+		if (!node) {
+			node = data_newnode();
+			*nptr = node;
 
-			data_newrecord(*node, nr, nd);
-			memcpy((*node)->R[0].r, r, nr*sizeof(int64_t));
+			node->k = key;
 
-			return &(*node)->R[0];
+			data_newrecord(node, nr, nd);
+			memcpy(node->R[0].r, r, nr*sizeof(int64_t));
+
+			return &node->R[0];
 		}
 
-		if ((*node)->nR && (*node)->k == key) {
+		if (node->nR && node->k == key) {
 			int n;
 
-			for (n = 0; n < (*node)->nR; n++)
-				if (!memcmp((*node)->R[n].r, r, nr*sizeof(int64_t)))
-					return &(*node)->R[n];
+			for (n = 0; n < node->nR; n++)
+				if (!memcmp(node->R[n].r, r, nr*sizeof(int64_t)))
+					return &node->R[n];
 
-			data_newrecord(*node, nr, nd);
-			memcpy((*node)->R[n].r, r, nr*sizeof(int64_t));
+			data_newrecord(node, nr, nd);
+			memcpy(node->R[n].r, r, nr*sizeof(int64_t));
 
-			return &(*node)->R[n];
+			return &node->R[n];
 		}
 
-		if ((*node)->nR) {
+		if (node->nR) {
 			tnode = data_newnode();
 
-			tnode->k = (*node)->k;
-			tnode->nR = (*node)->nR;
-			tnode->R = (*node)->R;
+			tnode->k = node->k;
+			tnode->nR = node->nR;
+			tnode->R = node->R;
 
-			(*node)->k = 0;
-			(*node)->c = calloc(1<<CMASK, sizeof(data_t *));
-			if (!(*node)->c)
-				error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc((*node)->c)");
-			(*node)->c[(tnode->k >> (CMASK*h)) & ((1<<CMASK)-1)] = tnode;
-			(*node)->nR = 0;
-			(*node)->R = NULL;
+			node->k = 0;
+			node->nR = 0;
+			node->R = NULL;
+
+			node->c = calloc(1<<CMASK, sizeof(data_t *));
+			if (!node->c)
+				error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(node->c)");
+
+			nptr = &node->c[(tnode->k >> (CMASK*h)) & ((1<<CMASK)-1)];
+			*nptr = tnode;
 		}
 
-		node = &(*node)->c[(key >> (CMASK*h)) & ((1<<CMASK)-1)];
+		nptr = &node->c[(key >> (CMASK*h)) & ((1<<CMASK)-1)];
+		node = *nptr;
+
 		h++;
+
+		assert(h < (KEYSIZE/CMASK) + 1);
 	}
 }
 

@@ -20,7 +20,7 @@
 
 #include "program.h"
 
-data_t *G;
+data_t G;
 
 static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 {
@@ -28,7 +28,7 @@ static int run(const bpf_sql_t *bpf_sql, const int64_t **C)
 	int64_t A = 0;
 	int64_t X = 0;
 	int64_t M[BPF_MEMWORDS] = {0};
-	record_t *R = &G->R[0];
+	record_t *R = &G.R[0];
 
 	pc--;
 	while (1) {
@@ -257,12 +257,11 @@ int main(int argc, char **argv, char *env[])
 	if (!mallopt(M_TOP_PAD, 64*1024*1024))
 		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "mallopt(M_TOP_PAD)");
 
-	G = data_newnode();
-	data_newrecord(G, bpf_sql.nkeys, bpf_sql.width);
-	G->nR = 0;
-	G->c = calloc(1<<CMASK, sizeof(data_t *));
-	if (!G->c)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(G->c)");
+	data_newrecord(&G, bpf_sql.nkeys, bpf_sql.width);
+	G.nR = 0;
+	G.c = calloc(1<<CMASK, sizeof(data_t *));
+	if (!G.c)
+		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(G.c)");
 
 	for (int r=0; r < nrows; r++, C[0]++, C[1]++) {
 		int ret;
@@ -274,7 +273,7 @@ int main(int argc, char **argv, char *env[])
 	munmap(c[0], sb[0].st_size);
 	munmap(c[1], sb[1].st_size);
 
-	data_iterate(G, print_cb);
+	data_iterate(&G, print_cb);
 
 	return(EX_OK);
 }
