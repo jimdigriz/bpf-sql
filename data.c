@@ -41,9 +41,9 @@ void data_newrecord(data_t *node, int nr, int nd)
 
 record_t *data_fetch(data_t *node, int64_t *r, int nr, int nd)
 {
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+	data_t **nptr;	/* initial loop never used as node=&G */
 	uint32_t key;
-	data_t **nptr;
-	data_t *tnode;
 	int h = 0;
 
 	key = murmur3_32((char *)r, nr*sizeof(int64_t), 0);
@@ -75,7 +75,7 @@ record_t *data_fetch(data_t *node, int64_t *r, int nr, int nd)
 		}
 
 		if (node->nR) {
-			tnode = data_newnode();
+			data_t *tnode = data_newnode();
 
 			tnode->k = node->k;
 			tnode->nR = node->nR;
