@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <malloc.h>
 
 #include "bpf-sql.h"
 #include "data.h"
@@ -248,6 +249,13 @@ int main(int argc, char **argv, char *env[])
 
 	int nrows = sb[0].st_size/sizeof(int64_t);
 	const int64_t *C[HACK_CSIZE] = { c[0], c[1] };
+
+#ifndef NDEBUG
+	if (!mallopt(M_CHECK_ACTION, 0))
+		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "mallopt(M_CHECK_ACTION)");
+#endif
+	if (!mallopt(M_TOP_PAD, 64*1024*1024))
+		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "mallopt(M_TOP_PAD)");
 
 	G = data_newnode();
 	data_newrecord(G, bpf_sql.nkeys, bpf_sql.width);
