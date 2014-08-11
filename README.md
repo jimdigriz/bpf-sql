@@ -74,6 +74,7 @@ In roughly order of importance:
 
  * tool to generate mock data to experiment with
  * remove `HACK` and make everything more dynamic
+ * [`malloc()` tuning](http://www.gnu.org/software/libc/manual/html_node/Malloc-Tunable-Parameters.html)
  * improve the profiling support
  * add stepping debugging support
  * frequency analysis
