@@ -114,7 +114,9 @@ void data_iterate(data_t *node, void (*cb)(const record_t *))
 		if (path[h].d->nR) {
 			for (int n = 0; n < path[h].d->nR; n++)
 				cb(&path[h].d->R[n]);
+
 			h--;
+
 			continue;
 		}
 
@@ -127,8 +129,10 @@ void data_iterate(data_t *node, void (*cb)(const record_t *))
 				continue;
 
 			h++;
+
 			path[h].d = d;
 			path[h].o = 0;
+
 			break;
 		}
 
