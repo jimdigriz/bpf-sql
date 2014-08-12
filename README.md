@@ -2,7 +2,7 @@ Some experiments in grafting a [Berkeley Packet Filter (BPF)](http://en.wikipedi
 
 Of course this results in some constraints.
 
-Treat the dataset as a spreadsheet where each column is an integer metric (use a [map](http://en.wikipedia.org/wiki/Associative_array) for strings) and represented by a separate file.  Each rows is a record where its metrics are found at the same location in each file.  This results in all the files having the same length and of course record count.
+Treat the data set as a spreadsheet where each column is an integer metric (use a [map](http://en.wikipedia.org/wiki/Associative_array) for strings) and represented by a separate file.  Each rows is a record where its metrics are found at the same location in each file.  This results in all the files having the same length and of course record count.
 
 # Preflight
 
@@ -15,13 +15,11 @@ Treat the dataset as a spreadsheet where each column is an integer metric (use a
 
 # Data Preparation
 
-The on-disk format used for each column file is just a raw list of 64bit signed integers stored in big-endian format, so when converting your own dataset you can use a tab separated input and some Perl to generate each metric file:
+The on-disk format used for each column file is just a raw list of 64bit signed integers stored in big-endian format, so when converting your own data set you can use a tab separated input and some Perl to generate each metric file:
 
     cat input_data | perl -pe '$_ = pack "q>", (split /\s+/)[0]' > metric0.bin
     cat input_data | perl -pe '$_ = pack "q>", (split /\s+/)[1]' > metric1.bin
     ...
-
-**N.B.** unsigned 64bit integer to signed 64bit integer is usually safe in that you should be able to cast them back, though only as long as you use the arithmetic operators wisely (ie. avoid `JMP_JG[TE]` and `BPF_NEG`)
 
 ## Generating Fake Data
 
@@ -40,7 +38,7 @@ The following will generate you roughly 1m/sec rows:
 The engine closely resembles the BPF filtering engine described in the [BSD BPF manpage](http://www.freebsd.org/cgi/man.cgi?bpf(4)) which is closely modelled after the [Steven McCanne's and Van Jacobson's BPF paper](http://usenix.org/publications/library/proceedings/sd93/mccanne.pdf).
 
     Element           Description
-
+    
     A                 64 bit wide accumulator
     X                 64 bit wide X register
     M[]               BPF_MEMWORDS x 64 bit wide misc registers aka "scratch
@@ -48,25 +46,51 @@ The engine closely resembles the BPF filtering engine described in the [BSD BPF 
     
     C[]               NCOL x 64bit wide read-only column registers that
                       have the current row record data (akin to BPF's P[])
-    R[]               RCOL x 64bit wide registers to create/replace records
-
-    G                 Global storage containing results
+    
+    G                 Non-accessible global storage containing results
+    R[]               (nkeys+width) x 64bit wide results registers (see below)
 
 The following instructions have had their action slightly amended:
 
     BPF_LD+BPF_ABS    A <- C[k]
     BPF_LD+BPF_IND    A <- C[X + k]
+    
+    BPF_RET           Return code unused, for now always zero
 
-    BPF_RET           Always returns zero
-
-**N.B.** all operations are as 64bit signed integer math
+**N.B.** all ALU operations are as 64bit signed integer math.  Any unsigned 64bit integers operations as signed 64bit integer is usually safe in that you should be able to cast them back correctly, though only as long as you use the arithmetic operators wisely (ie. avoid `JMP_JG[TE]` and `BPF_NEG`)
 
 The following load/store/find `BPF_REC` (record) instructions have been added:
 
     BPF_LD+BPF_REC    A <- R[k]
     BPF_ST+BPF_REC    R[k] <- A
 
-    BPF_MISC+BPF_LDR  Load R[] (created if it does not exist) from G
+## `R` Register Usage
+
+The `R[]` register is special in that there is no load or save instruction, interaction is 'on-demand' and in place.  The first `nkeys` registers group together to form an unique tuple that is used to reference a single record whilst the following remaining `width` registers make up the data portion.  A record is fetched (or created if it does not exist) when the data portion of those registers are read from or written to.
+
+When your program exits with `BPF_RET` or amends one of the `nkeys` registers, you 'commit' your changes directly to `G`.
+
+For example, if `nkeys` is 2 and `width` is 3, then the following plays out as such:
+
+ 1. set the registers `R[0]=7` and `R[1]=2`
+ 1. any read from `R[2], `R[3]` or `R[4]` 
+ 1. set `R[2]=-10`
+ 1. a search is now triggered for the record represented by `R[0:1]`
+ 1. as the record does not exist it is created
+ 1. set `R[3]=3` and `R[4]=18`
+ 1. call `BPF_RET`
+
+This will in the output create the resulting row:
+
+    7,2,-10,3,18
+
+Where `7,2` make up your key, and `-10,3,18` is the result data associated to it.
+
+### Notes
+
+ * records cannot be deleted once created
+ * to update a record, you read in the `width` registers, and write back out the new values
+ * you *can* create and update several rows for a single run of your program over `C[]`
 
 # TODO
 
@@ -79,7 +103,7 @@ In roughly order of importance:
  * add stepping debugging support
  * frequency analysis
  * intersection analysis (Venn)
- * alternative engine primitives, BPF not well suited due to all the indirects?
+ * alternative engine primitives, BPF not well suited due to all the indirect pointer dereferencing everywhere maybe?
      * [colorForth](http://www.colorforth.com/forth.html)
      * [Subroutine threading](http://www.cs.toronto.edu/~matz/dissertation/matzDissertation-latex2html/node7.html) especially [Speed of various interpreter dispatch techniques](http://www.complang.tuwien.ac.at/forth/threading/)
  * SQL to BPF converter
@@ -93,5 +117,5 @@ In roughly order of importance:
  * investigate [Blosc](http://www.blosc.org/) and its [c-blosc](https://github.com/Blosc/c-blosc) library
  * support an approximation 'turbo' [Zipfian](http://en.wikipedia.org/wiki/Zipf's_law) mode and use [sketches](http://en.wikipedia.org/wiki/Sketch_(mathematics)):
      * [Count-Min](https://sites.google.com/site/countminsketch/)
-     * [K-minimun Values](http://research.neustar.biz/2012/07/09/sketch-of-the-day-k-minimum-values/)
+     * [K-minimum Values](http://research.neustar.biz/2012/07/09/sketch-of-the-day-k-minimum-values/)
      * [HyperLogLog](http://research.neustar.biz/2012/10/25/sketch-of-the-day-hyperloglog-cornerstone-of-a-big-data-infrastructure/)

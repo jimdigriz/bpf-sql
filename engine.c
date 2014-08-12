@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <malloc.h>
 
 #include "bpf-sql.h"
 #include "data.h"
@@ -19,6 +20,7 @@ int run(data_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 	int64_t X = 0;
 	int64_t M[BPF_MEMWORDS] = {0};
 	record_t *R = &G->R[0];
+	int Rloaded = 0;
 
 	pc--;
 	while (1) {
@@ -47,9 +49,15 @@ int run(data_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				break;
 			case BPF_REC:
 				assert(pc->k < bpf_sql->nkeys + bpf_sql->width);
-				A = (pc->k < bpf_sql->nkeys)
-					? be64toh(R->r[pc->k])
-					: be64toh(R->d[pc->k - bpf_sql->nkeys]);
+				if (pc->k < bpf_sql->nkeys) {
+					A = be64toh(R->r[pc->k]);
+				} else {
+					if (!Rloaded) {
+						R = data_fetch(G, R->r, bpf_sql->nkeys, bpf_sql->width);
+						Rloaded = 1;
+					}
+					A = be64toh(R->d[pc->k - bpf_sql->nkeys]);
+				}
 				break;
 			default:
 				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "LD: UNKNOWN MODE");
@@ -78,10 +86,21 @@ int run(data_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				break;
 			case BPF_REC:
 				assert(pc->k < bpf_sql->nkeys + bpf_sql->width);
-				if (pc->k < bpf_sql->nkeys)
+				if (pc->k < bpf_sql->nkeys) {
+					if (Rloaded) {
+						memcpy(G->R[0].r, R->r, bpf_sql->nkeys*sizeof(int64_t));
+						memcpy(G->R[0].d, R->d, bpf_sql->width*sizeof(int64_t));
+						R = &G->R[0];
+						Rloaded = 0;
+					}
 					R->r[pc->k] = htobe64(A);
-				else
+				} else {
+					if (!Rloaded) {
+						R = data_fetch(G, R->r, bpf_sql->nkeys, bpf_sql->width);
+						Rloaded = 1;
+					}
 					R->d[pc->k - bpf_sql->nkeys] = htobe64(A);
+				}
 				break;
 			default:
 				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "ST: UNKNOWN MODE");
@@ -197,9 +216,8 @@ int run(data_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 			case BPF_TXA:
 				A = X;
 				break;
-			case BPF_LDR:
-				R = data_fetch(G, R->r, bpf_sql->nkeys, bpf_sql->width);
-				break;
+			default:
+				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "MISC: UNKNOWN MISCOP");
 			}
 			break;
 		default:

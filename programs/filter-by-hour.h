@@ -22,8 +22,7 @@ struct bpf_insn bpf_insns[] = {
 	BPF_STMT(BPF_ALU+BPF_SUB+BPF_X, 0),
 	BPF_STMT(BPF_ST+BPF_REC, 0),
 
-	/* find in G */
-	BPF_STMT(BPF_MISC+BPF_LDR, 0),
+	/* automatically finds in G */
 	
 	/* R[1]++ */
 	BPF_STMT(BPF_LD+BPF_REC, 1),
