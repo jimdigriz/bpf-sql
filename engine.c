@@ -88,7 +88,6 @@ int run(data_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				assert(pc->k < bpf_sql->nkeys + bpf_sql->width);
 				if (pc->k < bpf_sql->nkeys) {
 					if (Rloaded) {
-						memcpy(G->R[0].r, R->r, bpf_sql->nkeys*sizeof(int64_t));
 						memcpy(G->R[0].d, R->d, bpf_sql->width*sizeof(int64_t));
 						R = &G->R[0];
 						Rloaded = 0;
