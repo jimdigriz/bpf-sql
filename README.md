@@ -2,7 +2,7 @@ Some experiments in grafting a [Berkeley Packet Filter (BPF)](http://en.wikipedi
 
 Of course this results in some constraints.
 
-Treat the data set as a spreadsheet where each column is an integer metric (use a [map](http://en.wikipedia.org/wiki/Associative_array) for strings) and represented by a separate file.  Each rows is a record where its metrics are found at the same location in each file.  This results in all the files having the same length and of course record count.
+Treat the data set as a spreadsheet where each column is an integer metric (use a [map](http://en.wikipedia.org/wiki/Associative_array) for strings) and represented by a separate file.  Each row is a record and its metrics are found at the same location in each file, thus the files all have the same length and record count.
 
 # Preflight
 
