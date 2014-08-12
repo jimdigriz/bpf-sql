@@ -73,7 +73,6 @@ When your program exits with `BPF_RET` or amends one of the `nkeys` registers, y
 For example, if `nkeys` is 2 and `width` is 3, then the following plays out as such:
 
  1. set the registers `R[0]=7` and `R[1]=2`
- 1. any read from `R[2]`, `R[3]` or `R[4]` 
  1. set `R[2]=-10`
  1. a search is now triggered for the record represented by `R[0:1]`
  1. as the record does not exist it is created
