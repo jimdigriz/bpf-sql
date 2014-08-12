@@ -32,26 +32,29 @@ static void print_cb(const record_t *R)
 
 int main(int argc, char **argv, char *env[])
 {
-	int cfd[bpf_sql.ncols];
-	struct stat sb[bpf_sql.ncols];
-	int64_t *c[bpf_sql.ncols];
+	const int64_t *C[bpf_sql.ncols];
 
-	cfd[0] = open(bpf_sql.col[0], O_RDONLY);
-	fstat(cfd[0], &sb[0]);
+	assert(bpf_sql.ncols > 0);
 
-	cfd[1] = open(bpf_sql.col[1], O_RDONLY);
-	fstat(cfd[1], &sb[1]);
+	for (int i = 0; i < bpf_sql.ncols; i++) {
+		bpf_sql.col[i].fd = open(bpf_sql.col[i].filename, O_RDONLY);
+		if (bpf_sql.col[i].fd == -1)
+			error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "open('%s')", bpf_sql.col[i].filename);
 
-	assert(sb[0].st_size == sb[1].st_size);
+		fstat(bpf_sql.col[i].fd, &bpf_sql.col[i].sb);
 
-	c[0] = mmap(NULL, sb[0].st_size, PROT_READ, MAP_SHARED, cfd[0], 0);
-	close(cfd[0]);
+		assert(i == 0 || bpf_sql.col[0].sb.st_size == bpf_sql.col[i].sb.st_size);
 
-	c[1] = mmap(NULL, sb[1].st_size, PROT_READ, MAP_SHARED, cfd[1], 0);
-	close(cfd[1]);
+		bpf_sql.col[i].m = mmap(NULL, bpf_sql.col[i].sb.st_size, PROT_READ, MAP_SHARED, bpf_sql.col[i].fd, 0);
+		if (bpf_sql.col[i].m == MAP_FAILED)
+			error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "mmap('%s')", bpf_sql.col[i].filename);
 
-	int nrows = sb[0].st_size/sizeof(int64_t);
-	const int64_t *C[HACK_CSIZE] = { c[0], c[1] };
+		close(bpf_sql.col[i].fd);
+
+		C[i] = bpf_sql.col[i].m;
+	}
+
+	int nrows = bpf_sql.col[0].sb.st_size/sizeof(int64_t);
 
 #ifndef NDEBUG
 	if (!mallopt(M_CHECK_ACTION, 0))
@@ -72,8 +75,9 @@ int main(int argc, char **argv, char *env[])
 			error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "run(r=%d) != 0", r);
 	}
 
-	munmap(c[0], sb[0].st_size);
-	munmap(c[1], sb[1].st_size);
+	for (int i = 0; i < bpf_sql.ncols; i++)
+		if (munmap(bpf_sql.col[i].m, bpf_sql.col[i].sb.st_size) == -1)
+			error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "munmap('%s')", bpf_sql.col[i].filename);
 
 	data_iterate(&G, print_cb);
 

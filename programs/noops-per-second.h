@@ -16,17 +16,21 @@ struct bpf_program bpf_prog = {
 	.bf_insns	= bpf_insns,
 };
 
-#define HACK_CSIZE 2 /* bpf_sql.ncols */
+column_t columns[] = {
+		{	/* C[0] */
+			.filename	= "sample-data/day16265.tim.bin",
+		},
+		{	/* C[1] */
+			.filename	= "sample-data/day16265.tv2nspid.bin",
+		},
+};
 
 bpf_sql_t bpf_sql = {
-	.ncols	= 2,
-	.col	= {
-			"sample-data/day16265.tim.bin",
-			"sample-data/day16265.tv2nspid.bin"
-	},
-
 	.nkeys	= 1,
 	.width	= 1,
 
 	.prog	= &bpf_prog,
+
+	.ncols	= 2,
+	.col	= columns,
 };
