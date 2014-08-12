@@ -1,6 +1,4 @@
-#include <stdio.h>
 #include <stdint.h>
-#include <inttypes.h>
 #include <assert.h>
 #include <endian.h>
 #include <sysexits.h>
@@ -8,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include <malloc.h>
 
 #include "bpf-sql.h"
 #include "data.h"

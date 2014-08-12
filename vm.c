@@ -10,8 +10,6 @@
 #include <endian.h>
 #include <sysexits.h>
 #include <error.h>
-#include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 #include <malloc.h>
 
