@@ -15,11 +15,9 @@ Treat the data set as a spreadsheet where each column is an integer metric (use 
 
 # Data Preparation
 
-The on-disk format used for each column file is just a raw list of 64bit signed integers stored in big-endian format, so when converting your own data set you can use a tab separated input and some Perl to generate each metric file:
+The on-disk format used for each column file is just a raw list of 64bit signed integers stored in big-endian format, so when converting your own data set you can use a tab separated input and some Perl to generate each metric file (named `metricX.bin`):
 
-    cat input_data | perl -pe '$_ = pack "q>", (split /\s+/)[0]' > metric0.bin
-    cat input_data | perl -pe '$_ = pack "q>", (split /\s+/)[1]' > metric1.bin
-    ...
+    cat input_data | perl -ane 'foreach (0..$#F) { open($f[$_], ">", "metric".$_.".bin") if ($.==1); print {$f[$_]} pack "q>", $F[$_] }'
 
 ## Generating Fake Data
 
