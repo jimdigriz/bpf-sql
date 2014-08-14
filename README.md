@@ -23,7 +23,7 @@ The on-disk format used for each column file is just a raw list of 64bit signed 
 
 ### Random
 
-The following will generate you roughly 1m/sec rows:
+The following will generate you a column of data:
 
     SIZE=8       # 1=8bit, 2=16bit, 4=32bit, 8=64bit
     TYPE=d       # d=integer, u=unsigned int
