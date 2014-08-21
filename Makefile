@@ -54,7 +54,9 @@ vm: $(SOURCES:.c=.o)
 	 sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	 rm -f $@.$$$$
 
+ifeq (,$(filter $(MAKECMDGOALS),clean distclean))
 -include $(SOURCES:.c=.d)
+endif
 
 %.o: %.c
 	$(CROSS_COMPILE)$(CC) -c $(CFLAGS) $(FLAGS) $<
