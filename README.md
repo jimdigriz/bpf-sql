@@ -98,6 +98,7 @@ In roughly order of importance:
  * improve the profiling support
  * add stepping debugging support
  * frequency analysis
+ * [element distinctness/uniqueness](http://en.wikipedia.org/wiki/Element_distinctness_problem)
  * intersection analysis (Venn)
  * alternative engine primitives, BPF not well suited due to all the indirect pointer dereferencing everywhere maybe?
      * [colorForth](http://www.colorforth.com/forth.html)
