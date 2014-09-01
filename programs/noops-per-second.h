@@ -1,4 +1,6 @@
-/* get 'line' speed */
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+
+/* get 'line' (noop) speed */
 
 struct bpf_insn bpf_insns[] = {
 	/* A = C[0] */
@@ -12,7 +14,7 @@ struct bpf_insn bpf_insns[] = {
 };
 
 struct bpf_program bpf_prog = {
-	.bf_len		= sizeof(bpf_insns)/sizeof(struct bpf_insn),
+	.bf_len		= ARRAY_SIZE(bpf_insns),
 	.bf_insns	= bpf_insns,
 };
 
@@ -31,6 +33,6 @@ bpf_sql_t bpf_sql = {
 
 	.prog	= &bpf_prog,
 
-	.ncols	= 2,
+	.ncols	= ARRAY_SIZE(columns),
 	.col	= columns,
 };
