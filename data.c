@@ -39,6 +39,17 @@ void data_newrecord(data_t *node, int nr, int nd)
 	node->nR++;
 }
 
+/* root node is a scratch area */
+void data_init(data_t *G, int nr, int nd) {
+	assert(KEYSIZE % CMASK == 0);
+
+	data_newrecord(G, nr, nd);
+	G->nR = 0;
+	G->c = calloc(1<<CMASK, sizeof(data_t *));
+	if (!G->c)
+		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(G->c)");
+}
+
 record_t *data_fetch(data_t *node, int64_t *r, int nr, int nd)
 {
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"

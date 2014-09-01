@@ -1,11 +1,5 @@
+#include <limits.h>
 #include <stdint.h>
-
-#define	CMASK	4	/* 4 gives good speed and sane RAM usage */
-#define KEYSIZE	32	/* int32_t */
-
-#if KEYSIZE % CMASK
-#	error KEYSIZE must be multiple of CMASK
-#endif
 
 typedef struct {
 	int64_t		*r;
@@ -22,6 +16,11 @@ struct data_t {
 };
 typedef struct data_t data_t;
 
+/* 4 gives good speed and sane RAM usage */
+#define	CMASK	4
+/* KEYSIZE must be multiple of CMASK */
+#define KEYSIZE	CHAR_BIT*sizeof(((data_t *)0)->k)
+
 struct path {
 	data_t	*d;
 	int	o;
@@ -29,5 +28,6 @@ struct path {
 
 data_t *data_newnode(void);
 void data_newrecord(data_t *, int, int);
+void data_init(data_t *, int, int);
 record_t *data_fetch(data_t *, int64_t *, int, int);
 void data_iterate(data_t *, void (*)(const record_t *));

@@ -63,11 +63,7 @@ int main(int argc, char **argv, char *env[])
 	if (!mallopt(M_TOP_PAD, 64*1024*1024))
 		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "mallopt(M_TOP_PAD)");
 
-	data_newrecord(&G, bpf_sql.nkeys, bpf_sql.width);
-	G.nR = 0;
-	G.c = calloc(1<<CMASK, sizeof(data_t *));
-	if (!G.c)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(G.c)");
+	data_init(&G, bpf_sql.nkeys, bpf_sql.width);
 
 	for (int r=0; r < nrows; r++, C[0]++, C[1]++) {
 		int ret = run(&G, &bpf_sql, C);
