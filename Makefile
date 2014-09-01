@@ -39,6 +39,11 @@ help:
 	@echo 'Run:'
 	@echo '  all                    - build all src'
 	@echo
+	@echo 'Build Options:'
+	@echo '  [default]: debug/assert=on, optimise=off, strip=off, profiling=off'
+	@echo '  PROFILE=1: profiling=on'
+	@echo '   NDEBUG=1: debug/assert=off, optimise=on, strip=on, profiling=off'
+	@echo
 	@echo 'See README.md for further details'
 
 distclean: clean
