@@ -5,7 +5,7 @@
 #include "bpf.h"
 
 typedef struct {
-	char		filename[100];
+	char		*filename;
 	int		fd;
 	struct stat	sb;
 	int64_t 	*m;
