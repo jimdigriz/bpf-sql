@@ -50,5 +50,5 @@ bpf_sql_t bpf_sql = {
 	.prog	= &bpf_prog,
 
 	.ncols	= ARRAY_SIZE(columns),
-	.cols	= columns,
+	.col	= columns,
 };
