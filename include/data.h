@@ -14,7 +14,7 @@ typedef struct {
 struct data_t {
 	uint32_t	k;
 
-	struct data_t	**c;
+	struct data_t	*c;
 
 	int		nR;
 	record_t	*R;
@@ -26,7 +26,6 @@ struct path {
 	int	o;
 };
 
-data_t *data_newnode(void);
 void data_newrecord(data_t *, int, int);
 void data_init(data_t *, int, int);
 record_t *data_fetch(data_t *, int64_t *, int, int);

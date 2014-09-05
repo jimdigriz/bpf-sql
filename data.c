@@ -9,17 +9,6 @@
 #include "data.h"
 #include "murmur3.h"
 
-data_t *data_newnode(void)
-{
-	data_t *d;
-
-	d = calloc(1, sizeof(data_t));
-	if (!d)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(d)");
-
-	return d;
-}
-
 void data_newrecord(data_t *node, int nr, int nd)
 {
 	int n = node->nR;
@@ -45,34 +34,27 @@ void data_init(data_t *G, int nr, int nd) {
 
 	data_newrecord(G, nr, nd);
 	G->nR = 0;
-	G->c = calloc(1<<CMASK, sizeof(data_t *));
+	G->c = calloc(1<<CMASK, sizeof(data_t));
 	if (!G->c)
 		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(G->c)");
 }
 
 record_t *data_fetch(data_t *node, int64_t *r, int nr, int nd)
 {
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-	data_t **nptr;	/* initial loop never used as node=&G */
 	uint32_t key;
-	int h = 0;
+	int h;
 
 	key = murmur3_32((char *)r, nr*sizeof(int64_t), 0);
 
-	while (1) {
-		if (!node) {
-			node = data_newnode();
-			*nptr = node;
+	for (h = 0; h < (KEYSIZE/CMASK) + 1; node = &node->c[(key >> (CMASK*h)) & ((1<<CMASK)-1)], h++) {
 
+		if (node->c)
+			continue;
+
+		if (node->nR == 0)
 			node->k = key;
 
-			data_newrecord(node, nr, nd);
-			memcpy(node->R[0].r, r, nr*sizeof(int64_t));
-
-			return &node->R[0];
-		}
-
-		if (node->nR && node->k == key) {
+		if (node->k == key) {
 			int n;
 
 			for (n = 0; n < node->nR; n++)
@@ -85,32 +67,24 @@ record_t *data_fetch(data_t *node, int64_t *r, int nr, int nd)
 			return &node->R[n];
 		}
 
-		if (node->nR) {
-			data_t *tnode = data_newnode();
+		data_t **cptr = &node->c;
+		*cptr = calloc(1<<CMASK, sizeof(data_t));
+		if (!*cptr)
+			error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(*cptr)");
 
-			tnode->k = node->k;
-			tnode->nR = node->nR;
-			tnode->R = node->R;
+		int k = (node->k >> (CMASK*h)) & ((1<<CMASK)-1);
 
-			node->k = 0;
-			node->nR = 0;
-			node->R = NULL;
+		node->c[k].k = node->k;
+		node->c[k].nR = node->nR;
+		node->c[k].R = node->R;
 
-			node->c = calloc(1<<CMASK, sizeof(data_t *));
-			if (!node->c)
-				error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(node->c)");
-
-			nptr = &node->c[(tnode->k >> (CMASK*h)) & ((1<<CMASK)-1)];
-			*nptr = tnode;
-		}
-
-		nptr = &node->c[(key >> (CMASK*h)) & ((1<<CMASK)-1)];
-		node = *nptr;
-
-		h++;
-
-		assert(h < (KEYSIZE/CMASK) + 1);
+		node->k = 0;
+		node->nR = 0;
+		node->R = NULL;
 	}
+
+	error_at_line(EX_SOFTWARE, errno, __FILE__, __LINE__, "broke out of loop");
+	exit(1);
 }
 
 void data_iterate(data_t *node, void (*cb)(const record_t *))
@@ -127,18 +101,18 @@ void data_iterate(data_t *node, void (*cb)(const record_t *))
 				cb(&path[h].d->R[n]);
 
 			h--;
+			continue;
+		}
 
+		if (!path[h].d->c) {
+			h--;
 			continue;
 		}
 
 		while (path[h].o < 1<<CMASK) {
-			data_t *d = path[h].d->c[path[h].o];
+			data_t *d = &path[h].d->c[path[h].o];
 
 			path[h].o++;
-
-			if (!d)
-				continue;
-
 			h++;
 
 			path[h].d = d;
