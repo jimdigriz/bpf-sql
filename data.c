@@ -46,8 +46,7 @@ record_t *data_fetch(data_t *node, int64_t *r, int nr, int nd)
 
 	key = murmur3_32((char *)r, nr*sizeof(int64_t), 0);
 
-	for (h = 0; h < (KEYSIZE/CMASK) + 1; node = &node->c[(key >> (CMASK*h)) & ((1<<CMASK)-1)], h++) {
-
+	for (h = 0; h <= KEYSIZE/CMASK; node = &node->c[(key >> (CMASK*h)) & ((1<<CMASK)-1)], h++) {
 		if (node->c)
 			continue;
 
