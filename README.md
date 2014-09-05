@@ -94,6 +94,7 @@ Where `7,2` make up your key, and `-10,3,18` is the result data associated to it
 
 In roughly order of importance:
 
+ * filter-by-hour.h is 15% slower after 723b8804
  * tool to generate mock data to experiment with
  * [`malloc()` tuning](http://www.gnu.org/software/libc/manual/html_node/Malloc-Tunable-Parameters.html)
  * improve the profiling support
