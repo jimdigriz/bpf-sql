@@ -125,7 +125,7 @@ void data_load(struct data *G)
 	if (r)
 		memcpy(&G->R[o], r->d, G->d[G->nd-1].w*sizeof(int64_t));
 	else
-		memset(&G->R[o], -0, G->d[G->nd-1]*sizeof(int64_t));
+		memset(&G->R[o], -0, G->d[G->nd-1].w*sizeof(int64_t));	/* negative zero */
 }
 
 void data_store(struct data *G)
