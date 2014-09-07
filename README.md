@@ -100,7 +100,7 @@ In roughly order of importance:
  * frequency analysis
  * [element distinctness/uniqueness](http://en.wikipedia.org/wiki/Element_distinctness_problem)
  * intersection analysis (Venn)
- * [INT32-C. Ensure that operations on signed integers do not result in overflow](https://www.securecoding.cert.org/confluence/display/seccode/INT32-C.+Ensure+that+operations+on+signed+integers+do+not+result+in+overflow)
+ * [INT32-C. Ensure that operations on signed integers do not result in overflow](https://www.securecoding.cert.org/confluence/display/seccode/INT32-C.+Ensure+that+operations+on+signed+integers+do+not+result+in+overflow) - maybe look to OS X's [checkint(3)](https://developer.apple.com/library/mac/documentation/Darwin/Reference/Manpages/man3/checkint.3.html)
  * alternative engine primitives, BPF not well suited due to all the indirect pointer dereferencing everywhere maybe?
      * [colorForth](http://www.colorforth.com/forth.html)
      * [Subroutine threading](http://www.cs.toronto.edu/~matz/dissertation/matzDissertation-latex2html/node7.html) especially [Speed of various interpreter dispatch techniques](http://www.complang.tuwien.ac.at/forth/threading/)
