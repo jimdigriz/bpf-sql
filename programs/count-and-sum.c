@@ -41,12 +41,12 @@ static struct bpf_program bpf_prog = {
 };
 
 static column_t columns[] = {
-		{	/* C[0] */
-			.filename	= "sample-data/day16265.tim.bin",
-		},
-		{	/* C[1] */
-			.filename	= "sample-data/day16265.tv2nspid.bin",
-		},
+	{	/* C[0] */
+		.filename	= "sample-data/day16265.tim.bin",
+	},
+	{	/* C[1] */
+		.filename	= "sample-data/day16265.tv2nspid.bin",
+	},
 };
 
 bpf_sql_t bpf_sql = {
