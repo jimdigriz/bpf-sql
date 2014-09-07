@@ -93,11 +93,9 @@ Where `7,2` make up your key, and `-10,3,18` is the result data associated to it
 
 In roughly order of importance:
 
- * filter-by-hour.h is 15% slower after 723b8804 - turns out to be branch related (PGO fixes it)
  * tool to generate mock data to experiment with
- * [`malloc()` tuning](http://www.gnu.org/software/libc/manual/html_node/Malloc-Tunable-Parameters.html)
- * improve the profiling support
  * add stepping debugging support
+ * improve the profiling visibility
  * frequency analysis
  * [element distinctness/uniqueness](http://en.wikipedia.org/wiki/Element_distinctness_problem)
  * intersection analysis (Venn)
@@ -108,8 +106,15 @@ In roughly order of importance:
  * BPF checker to simplify the engine
  * BPF optimiser
  * steroids:
+     * [What every programmer should know about memory](http://www.akkadia.org/drepper/cpumemory.pdf)
+     * [`malloc()` tuning](http://www.gnu.org/software/libc/manual/html_node/Malloc-Tunable-Parameters.html)
      * [`posix_madvise()`](http://www.freebsd.org/cgi/man.cgi?posix_madvise(2))
      * [GCC Optimization's](https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html)
+         * [Performance Tuning with GCC](http://www.redhat.com/magazine/011sep05/features/gcc/)
+         * [`-ffast-math` and `-Ofast`](http://programerror.com/2009/09/when-gccs-ffast-math-isnt/)
+         * [GCC x86 performance hints](https://software.intel.com/en-us/blogs/2012/09/26/gcc-x86-performance-hints)
+         * [`-freorder-blocks-and-partition`, `-fno-common`, `-fno-zero-initialized-in-bss`](http://blog.mozilla.org/tglek/2010/03/05/mirror-mirror-on-the-wall-why-is-my-binary-slow/)
+     * [Profile Guided Optimisations (PGO) - using `-fprofile-generate` and `-fprofile-use`](http://blog.mozilla.org/tglek/2010/04/12/squeezing-every-last-bit-of-performance-out-of-the-linux-toolchain/)
      * [`__builtin_prefetch`](https://gcc.gnu.org/onlinedocs/gcc-3.3.6/gcc/Other-Builtins.html#index-g_t_005f_005fbuiltin_005fprefetch-1861)
      * [Auto-vectorization with gcc 4.7](http://locklessinc.com/articles/vectorize/)
  * investigate [Blosc](http://www.blosc.org/) and its [c-blosc](https://github.com/Blosc/c-blosc) library
