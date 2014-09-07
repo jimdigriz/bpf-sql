@@ -9,7 +9,7 @@ CFLAGS		+= -pipe -pedantic -Wall -std=c99 -D_BSD_SOURCE $(INCLUDES)
 LDFLAGS		+= -lpthread
 
 ifdef PROFILE
-	CFLAGS  += -pg -fprofile-arcs -ftest-coverage
+	CFLAGS  += -pg -fprofile-generate -ftest-coverage
 	LDFLAGS += -pg -lgcov -coverage
 endif
 
@@ -42,14 +42,15 @@ help:
 	@echo 'Build Options:'
 	@echo '  [default]: debug/assert=on, optimise=off, strip=off, profiling=off'
 	@echo '  PROFILE=1: profiling=on'
-	@echo '   NDEBUG=1: debug/assert=off, optimise=on, strip=on, profiling=off'
+	@echo '   NDEBUG=1: debug/assert=off, optimise=on, strip=on'
 	@echo
 	@echo 'See README.md for further details'
 
 distclean: clean
+	rm -f gmon.out *.gcov *.gcda *.gcno
 
 clean:
-	rm -f $(TARGETS) *.o *.d *.d.* gmon.out *.gcov *.gcda *.gcno
+	rm -f $(TARGETS) *.o *.d
 
 vm: $(SOURCES:.c=.o)
 
