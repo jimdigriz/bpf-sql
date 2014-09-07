@@ -115,13 +115,14 @@ void data_load(struct data *G)
 			r = data_fetch(r->t, RDONLY, &R[o], G->d[i].w);
 			break;
 		case DATA:
-			ERROR0(EX_SOFTWARE, "should not see DATA type");
+			ERROR0(EX_SOFTWARE, "should not see DATA type here");
 			break;
 		default:
 			ERRORV(EX_SOFTWARE, "unknown data type: %d", G->d[i].t);
 		}
 	}
 
+	/* make use of final DATA if record exists */
 	if (r)
 		memcpy(&G->R[o], r->d, G->d[G->nd-1].w*sizeof(int64_t));
 	else
