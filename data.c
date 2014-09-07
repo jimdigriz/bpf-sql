@@ -9,6 +9,8 @@
 #include "data.h"
 #include "murmur3.h"
 
+#define	READONLY	1
+
 static void data_newrecord(datag_t *G, data_t *node)
 {
 	int n = node->nR;
@@ -43,7 +45,7 @@ void data_init(datag_t **G, int nk, int nd) {
 	(*G)->nd = nd;
 }
 
-static record_t *data_fetch(datag_t *G, int create)
+static record_t *data_fetch(datag_t *G, int mode)
 {
 	data_t *node = &G->D;
 	uint32_t key = murmur3_32((char *)&G->R[0], G->nk*sizeof(int64_t), 0);
@@ -52,8 +54,12 @@ static record_t *data_fetch(datag_t *G, int create)
 		if (node->c)
 			continue;
 
-		if (node->nR == 0)
+		if (node->nR == 0) {
+			if (mode == READONLY)
+				return NULL;
+
 			node->k = key;
+		}
 
 		if (node->k == key) {
 			int n;
@@ -62,7 +68,7 @@ static record_t *data_fetch(datag_t *G, int create)
 				if (!memcmp(node->R[n].k, &G->R[0], G->nk*sizeof(int64_t)))
 					return &node->R[n];
 
-			if (!create)
+			if (mode == READONLY)
 				return NULL;
 
 			data_newrecord(G, node);
@@ -133,13 +139,13 @@ void data_iterate(datag_t *G, void (*cb)(const record_t *))
 
 void data_load(datag_t *G)
 {
-	record_t *r = data_fetch(G, 0);
+	record_t *r = data_fetch(G, READONLY);
 	if (r)
 		memcpy(&G->R[G->nk], r->d, G->nd*sizeof(int64_t));
 }
 
 void data_store(datag_t *G)
 {
-	record_t *r = data_fetch(G, 1);
+	record_t *r = data_fetch(G, 0);
 	memcpy(r->d, &G->R[G->nk], G->nd*sizeof(int64_t));
 }
