@@ -10,7 +10,7 @@ Treat the data set as a spreadsheet where each column is an integer metric (use 
     
     git clone https://github.com/jimdigriz/bpf-sql.git
     cd bpf-sql
-    ln -f -s programs/filter-by-hour.h program.h
+    ln -f -s programs/filter-by-hour.c program.c
     make help
     make
 

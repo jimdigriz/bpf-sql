@@ -1,7 +1,7 @@
 .*
 !.gitignore
 
-program.h
+program.c
 
 vm
 

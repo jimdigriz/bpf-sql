@@ -1,8 +1,10 @@
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+#include <stdint.h>
+
+#include "bpf-sql.h"
 
 /* get 'line' (noop) speed */
 
-struct bpf_insn bpf_insns[] = {
+static struct bpf_insn bpf_insns[] = {
 	/* A = C[0] */
 	BPF_STMT(BPF_LD+BPF_ABS, 0),
 
@@ -13,12 +15,12 @@ struct bpf_insn bpf_insns[] = {
 	BPF_STMT(BPF_RET+BPF_K, 0),
 };
 
-struct bpf_program bpf_prog = {
+static struct bpf_program bpf_prog = {
 	.bf_len		= ARRAY_SIZE(bpf_insns),
 	.bf_insns	= bpf_insns,
 };
 
-column_t columns[] = {
+static column_t columns[] = {
 		{	/* C[0] */
 			.filename	= "sample-data/day16265.tim.bin",
 		},

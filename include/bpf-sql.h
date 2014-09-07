@@ -4,6 +4,8 @@
 
 #include "bpf.h"
 
+#define	ARRAY_SIZE(x)	(sizeof(x)/sizeof(x[0]))
+
 typedef struct {
 	char		*filename;
 	int		fd;

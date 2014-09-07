@@ -13,11 +13,10 @@
 #include <errno.h>
 #include <malloc.h>
 
-#include "data.h"
 #include "bpf-sql.h"
-#include "engine.h"
-
 #include "program.h"
+#include "data.h"
+#include "engine.h"
 
 datag_t *G;
 

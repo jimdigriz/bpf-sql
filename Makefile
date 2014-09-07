@@ -27,7 +27,7 @@ endif
 LDFLAGS	+= -Wl,--gc-sections
 
 TARGETS = vm
-SOURCES = vm.c data.c murmur3.c engine.c
+SOURCES = vm.c program.c data.c murmur3.c engine.c
 
 all: $(TARGETS)
 
