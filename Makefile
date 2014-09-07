@@ -50,7 +50,7 @@ distclean: clean
 	rm -f gmon.out *.gcov *.gcda *.gcno
 
 clean:
-	rm -f $(TARGETS) *.o *.d
+	rm -f $(TARGETS) *.o *.d *.d.*
 
 vm: $(SOURCES:.c=.o)
 
