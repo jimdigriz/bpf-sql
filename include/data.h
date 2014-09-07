@@ -7,7 +7,7 @@
 #define KEYSIZE	CHAR_BIT*sizeof(((data_t *)0)->k)
 
 typedef struct {
-	int64_t		*r;
+	int64_t		*k;
 	int64_t		*d;
 } record_t;
 
@@ -21,12 +21,22 @@ struct data_t {
 };
 typedef struct data_t data_t;
 
+struct datag_t {
+	struct data_t	D;
+
+	int64_t		*R;
+
+	int		nk;
+	int		nd;
+};
+typedef struct datag_t datag_t;
+
 struct path {
 	data_t	*d;
 	int	o;
 };
 
-void data_newrecord(data_t *, int, int);
-void data_init(data_t *, int, int);
-record_t *data_fetch(data_t *, int64_t *, int, int);
-void data_iterate(data_t *, void (*)(const record_t *));
+void data_init(datag_t **, int, int);
+void data_load(datag_t *);
+void data_store(datag_t *);
+void data_iterate(datag_t *, void (*)(const record_t *));

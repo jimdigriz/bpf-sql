@@ -9,7 +9,7 @@
 #include "data.h"
 #include "murmur3.h"
 
-void data_newrecord(data_t *node, int nr, int nd)
+static void data_newrecord(datag_t *G, data_t *node)
 {
 	int n = node->nR;
 
@@ -17,31 +17,36 @@ void data_newrecord(data_t *node, int nr, int nd)
 	if (!node->R)
 		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "realloc(node->R)");
 
-	node->R[n].r = calloc(nr, sizeof(int64_t));
-	if (!node->R[n].r)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(node->R[n].r)");
+	node->R[n].k = calloc(G->nk, sizeof(int64_t));
+	if (!node->R[n].k)
+		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(node->R[n].k)");
 
-	node->R[n].d = calloc(nd, sizeof(int64_t));
+	node->R[n].d = calloc(G->nd, sizeof(int64_t));
 	if (!node->R[n].d)
 		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(node->R[n].d)");
 
 	node->nR++;
 }
 
-/* root node is a scratch area */
-void data_init(data_t *G, int nr, int nd) {
+void data_init(datag_t **G, int nk, int nd) {
 	assert(KEYSIZE % CMASK == 0);
 
-	data_newrecord(G, nr, nd);
-	G->nR = 0;
-	G->c = calloc(1<<CMASK, sizeof(data_t));
-	if (!G->c)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(G->c)");
+	*G = calloc(1, sizeof(datag_t));
+	if (!*G)
+		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(*G)");
+
+	(*G)->R = calloc(1, (nk+nd)*sizeof(int64_t));
+	if (!(*G)->R)
+		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc((*G)->R)");
+
+	(*G)->nk = nk;
+	(*G)->nd = nd;
 }
 
-record_t *data_fetch(data_t *node, int64_t *r, int nr, int nd)
+static record_t *data_fetch(datag_t *G, int create)
 {
-	uint32_t key = murmur3_32((char *)r, nr*sizeof(int64_t), 0);
+	data_t *node = &G->D;
+	uint32_t key = murmur3_32((char *)&G->R[0], G->nk*sizeof(int64_t), 0);
 
 	for (int h = 0; h <= KEYSIZE/CMASK; node = &node->c[(key >> (CMASK*h)) & ((1<<CMASK)-1)], h++) {
 		if (node->c)
@@ -54,11 +59,14 @@ record_t *data_fetch(data_t *node, int64_t *r, int nr, int nd)
 			int n;
 
 			for (n = 0; n < node->nR; n++)
-				if (!memcmp(node->R[n].r, r, nr*sizeof(int64_t)))
+				if (!memcmp(node->R[n].k, &G->R[0], G->nk*sizeof(int64_t)))
 					return &node->R[n];
 
-			data_newrecord(node, nr, nd);
-			memcpy(node->R[n].r, r, nr*sizeof(int64_t));
+			if (!create)
+				return NULL;
+
+			data_newrecord(G, node);
+			memcpy(node->R[n].k, &G->R[0], G->nk*sizeof(int64_t));
 
 			return &node->R[n];
 		}
@@ -83,8 +91,9 @@ record_t *data_fetch(data_t *node, int64_t *r, int nr, int nd)
 	exit(1);
 }
 
-void data_iterate(data_t *node, void (*cb)(const record_t *))
+void data_iterate(datag_t *G, void (*cb)(const record_t *))
 {
+	data_t *node = &G->D;
 	struct path path[(KEYSIZE/CMASK) + 1];
 	int h = 0;
 
@@ -120,4 +129,17 @@ void data_iterate(data_t *node, void (*cb)(const record_t *))
 		if (path[h].o == 1<<CMASK)
 			h--;
 	}
+}
+
+void data_load(datag_t *G)
+{
+	record_t *r = data_fetch(G, 0);
+	if (r)
+		memcpy(&G->R[G->nk], r->d, G->nd*sizeof(int64_t));
+}
+
+void data_store(datag_t *G)
+{
+	record_t *r = data_fetch(G, 1);
+	memcpy(r->d, &G->R[G->nk], G->nd*sizeof(int64_t));
 }

@@ -36,46 +36,45 @@ The following will generate you a column of data:
 
 The engine closely resembles the BPF filtering engine described in the [BSD BPF manpage](http://www.freebsd.org/cgi/man.cgi?bpf(4)) which is closely modelled after the [Steven McCanne's and Van Jacobson's BPF paper](http://usenix.org/publications/library/proceedings/sd93/mccanne.pdf).
 
-    Element           Description
+    Element            Description
     
-    A                 64 bit wide accumulator
-    X                 64 bit wide X register
-    M[]               BPF_MEMWORDS x 64 bit wide misc registers aka "scratch
-                      memory store", addressable from 0 BPF_MEMWORDS-1
+    A                  64 bit wide accumulator
+    X                  64 bit wide X register
+    M[]                BPF_MEMWORDS x 64 bit wide misc registers aka "scratch
+                       memory store", addressable from 0 BPF_MEMWORDS-1
     
-    C[]               NCOL x 64bit wide read-only column registers that
-                      have the current row record data (akin to BPF's P[])
+    C[]                NCOL x 64bit wide read-only column registers that
+                       have the current row record data (akin to BPF's P[])
     
-    G                 Non-accessible global storage containing results
-    R[]               (nkeys+width) x 64bit wide results registers (see below)
+    G                  Non-accessible global storage containing results
+    R[]                (nkeys+width) x 64bit wide results registers (see below)
 
 The following instructions have had their action slightly amended:
 
-    BPF_LD+BPF_ABS    A <- C[k]
-    BPF_LD+BPF_IND    A <- C[X + k]
+    BPF_LD+BPF_ABS     A <- C[k]
+    BPF_LD+BPF_IND     A <- C[X + k]
     
-    BPF_RET           Return code unused, for now always zero
+    BPF_RET            Return code unused, for now always zero
 
 **N.B.** all ALU operations are as 64bit signed integer math.  Any unsigned 64bit integers operations as signed 64bit integer is usually safe in that you should be able to cast them back correctly, though only as long as you use the arithmetic operators wisely (ie. avoid `JMP_JG[TE]` and `BPF_NEG`)
 
 The following load/store/find `BPF_REC` (record) instructions have been added:
 
-    BPF_LD+BPF_REC    A <- R[k]
-    BPF_ST+BPF_REC    R[k] <- A
+    BPF_LD+BPF_REC     A <- R[k]
+    BPF_ST+BPF_REC     R[k] <- A
+    BPF_MISC+BPF_LDR   R <- G
+    BPF_MISC+BPF_STR   G <- R
 
 ## `R` Register Usage
 
-The `R[]` register is special in that there is no load or save instruction, interaction is 'on-demand' and in place.  The first `nkeys` registers group together to form an unique tuple that is used to reference a single record whilst the following remaining `width` registers make up the data portion.  A record is fetched (or created if it does not exist) when the data portion of those registers are read from or written to.
-
-When your program exits with `BPF_RET` or amends one of the `nkeys` registers, you 'commit' your changes directly to `G`.
+The `R[]` register is special as it stores records loaded in and from G, and is the set of registers you use to get data into G.  The first `nkeys` registers group together to form an unique tuple that is used to reference a single record whilst the following remaining `width` registers make up the data portion.
 
 For example, if `nkeys` is 2 and `width` is 3, then the following plays out as such:
 
  1. set the registers `R[0]=7` and `R[1]=2`
- 1. set `R[2]=-10`
- 1. a search is now triggered for the record represented by `R[0:1]`
- 1. as the record does not exist it is created
- 1. set `R[3]=3` and `R[4]=18`
+ 1. call `BPF_MISC+BPF_LDR` to fetch the record, as it does not exist, this is a NOOP
+ 1. set `R[2]=-10`, set `R[3]=3` and `R[4]=18`
+ 1. call `BPF_MISC+BPF_STR` to store the record, as it does not exist, it is automatically created
  1. call `BPF_RET`
 
 This will in the output create the resulting row:
@@ -86,9 +85,9 @@ Where `7,2` make up your key, and `-10,3,18` is the result data associated to it
 
 ### Notes
 
+ * if you call `BPF_RET` before calling `BPF_MISC+BPF_STR`, your changes are discarded
  * records cannot be deleted once created
- * to update a record, set the `nkeys` registers, read in the `width` registers and write out the new values into the `width` registers
- * you *can* create and update several rows for a single run of your program over `C[]`
+ * you *can* create and update several records for a single run of your program over `C[]`
 
 # TODO
 

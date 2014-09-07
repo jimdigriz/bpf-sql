@@ -57,6 +57,7 @@
 #define		BPF_TAX		0x00
 #define		BPF_TXA		0x80
 #define		BPF_LDR		0xa0
+#define		BPF_STR		0xb0
 
 struct bpf_program {
 	u_int bf_len;

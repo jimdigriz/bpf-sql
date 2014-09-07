@@ -10,14 +10,13 @@
 #include "bpf-sql.h"
 #include "data.h"
 
-int run(data_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
+int run(datag_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 {
 	struct bpf_insn *pc = &bpf_sql->prog->bf_insns[0];
 	int64_t A = 0;
 	int64_t X = 0;
 	int64_t M[BPF_MEMWORDS] = {0};
-	record_t *R = &G->R[0];
-	int Rloaded = 0;
+	int64_t *R = G->R;
 
 	pc--;
 	while (1) {
@@ -45,16 +44,8 @@ int run(data_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				A = M[pc->k];
 				break;
 			case BPF_REC:
-				assert(pc->k < bpf_sql->nkeys + bpf_sql->width);
-				if (pc->k < bpf_sql->nkeys) {
-					A = be64toh(R->r[pc->k]);
-				} else {
-					if (!Rloaded) {
-						R = data_fetch(G, R->r, bpf_sql->nkeys, bpf_sql->width);
-						Rloaded = 1;
-					}
-					A = be64toh(R->d[pc->k - bpf_sql->nkeys]);
-				}
+				assert(pc->k < G->nk + G->nd);
+				A = be64toh(R[pc->k]);
 				break;
 			default:
 				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "LD: UNKNOWN MODE");
@@ -82,21 +73,8 @@ int run(data_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				M[pc->k] = A;
 				break;
 			case BPF_REC:
-				assert(pc->k < bpf_sql->nkeys + bpf_sql->width);
-				if (pc->k < bpf_sql->nkeys) {
-					if (Rloaded) {
-						memcpy(G->R[0].d, R->d, bpf_sql->width*sizeof(int64_t));
-						R = &G->R[0];
-						Rloaded = 0;
-					}
-					R->r[pc->k] = htobe64(A);
-				} else {
-					if (!Rloaded) {
-						R = data_fetch(G, R->r, bpf_sql->nkeys, bpf_sql->width);
-						Rloaded = 1;
-					}
-					R->d[pc->k - bpf_sql->nkeys] = htobe64(A);
-				}
+				assert(pc->k < G->nk + G->nd);
+				R[pc->k] = htobe64(A);
 				break;
 			default:
 				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "ST: UNKNOWN MODE");
@@ -211,6 +189,12 @@ int run(data_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				break;
 			case BPF_TXA:
 				A = X;
+				break;
+			case BPF_LDR:
+				data_load(G);
+				break;
+			case BPF_STR:
+				data_store(G);
 				break;
 			default:
 				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "MISC: UNKNOWN MISCOP");

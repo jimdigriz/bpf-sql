@@ -19,12 +19,12 @@
 
 #include "program.h"
 
-data_t G;
+datag_t *G;
 
 static void print_cb(const record_t *R)
 {
 	for (int i = 0; i < bpf_sql.nkeys; i++)
-		printf("%" PRId64 "\t", be64toh(R->r[i]));
+		printf("%" PRId64 "\t", be64toh(R->k[i]));
 	for (int i = 0; i < bpf_sql.width; i++)
 		printf("%" PRId64 "\t", be64toh(R->d[i]));
 	printf("\n");
@@ -66,7 +66,7 @@ int main(int argc, char **argv, char *env[])
 	data_init(&G, bpf_sql.nkeys, bpf_sql.width);
 
 	for (int r=0; r < nrows; r++, C[0]++, C[1]++) {
-		int ret = run(&G, &bpf_sql, C);
+		int ret = run(G, &bpf_sql, C);
 		if (ret)
 			error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "run(r=%d) != 0", r);
 	}
@@ -75,7 +75,7 @@ int main(int argc, char **argv, char *env[])
 		if (munmap(bpf_sql.col[i].m, bpf_sql.col[i].sb.st_size) == -1)
 			error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "munmap('%s')", bpf_sql.col[i].filename);
 
-	data_iterate(&G, print_cb);
+	data_iterate(G, print_cb);
 
 	return(EX_OK);
 }
