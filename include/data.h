@@ -29,7 +29,7 @@ struct data_desc {
 struct data {
 	struct record		r;	/* root record */
 
-	int64_t			*wR;	/* R register width */
+	int64_t			wR;	/* R register width */
 	int64_t			*R;	/* R register */
 
 	int			nd;	/* number of desc */

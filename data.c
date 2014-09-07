@@ -141,7 +141,7 @@ void data_iterate(struct data *G, void (*cb)(const struct data *, const int64_t 
 	struct {
 		struct trie	*d;
 		int		o;
-	} path[(KEYSIZE/CMASK) + 1];;
+	} path[(KEYSIZE/CMASK) + 1];
 	int h = 0;
 
 	path[0].d = node;
