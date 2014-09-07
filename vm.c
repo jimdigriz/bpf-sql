@@ -63,8 +63,9 @@ int main(int argc, char **argv, char *env[])
 
 	data_init(&G, bpf_sql.nkeys, bpf_sql.width);
 
-	for (int r=0; r < nrows; r++, C[0]++, C[1]++) {
+	for (int r = 0; r < nrows; r++, C[0]++, C[1]++) {
 		int ret = run(G, &bpf_sql, C);
+
 		if (ret)
 			ERRORV(EX_SOFTWARE, "run(r=%d) != 0", r);
 	}
@@ -75,5 +76,5 @@ int main(int argc, char **argv, char *env[])
 
 	data_iterate(G, print_cb);
 
-	return(EX_OK);
+	return EX_OK;
 }

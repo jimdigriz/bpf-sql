@@ -30,7 +30,8 @@ static void data_newrecord(datag_t *G, data_t *node)
 	node->nR++;
 }
 
-void data_init(datag_t **G, int nk, int nd) {
+void data_init(datag_t **G, int nk, int nd)
+{
 	assert(KEYSIZE % CMASK == 0);
 
 	*G = calloc(1, sizeof(datag_t));
@@ -140,6 +141,7 @@ void data_iterate(datag_t *G, void (*cb)(const record_t *))
 void data_load(datag_t *G)
 {
 	record_t *r = data_fetch(G, READONLY);
+
 	if (r)
 		memcpy(&G->R[G->nk], r->d, G->nd*sizeof(int64_t));
 }
@@ -147,5 +149,6 @@ void data_load(datag_t *G)
 void data_store(datag_t *G)
 {
 	record_t *r = data_fetch(G, 0);
+
 	memcpy(r->d, &G->R[G->nk], G->nd*sizeof(int64_t));
 }

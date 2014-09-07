@@ -17,6 +17,7 @@ int run(datag_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 	pc--;
 	while (1) {
 		int64_t v;
+
 		pc++;
 
 		switch (BPF_CLASS(pc->code)) {
