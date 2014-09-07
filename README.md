@@ -85,6 +85,7 @@ Where `7,2` make up your key, and `-10,3,18` is the result data associated to it
 
 ### Notes
 
+ * if `BPF_MISC+BPF_LDR` cannot find the record, then the data portion of `R` is set to [*negative* zero](http://en.wikipedia.org/wiki/Signed_zero)
  * if you call `BPF_RET` before calling `BPF_MISC+BPF_STR`, your changes are discarded
  * records cannot be deleted once created
  * you *can* create and update several records for a single run of your program over `C[]`

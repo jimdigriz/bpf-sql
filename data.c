@@ -144,6 +144,8 @@ void data_load(datag_t *G)
 
 	if (r)
 		memcpy(&G->R[G->nk], r->d, G->nd*sizeof(int64_t));
+	else
+		memset(&G->R[G->nk], -0, G->nd*sizeof(int64_t));
 }
 
 void data_store(datag_t *G)
