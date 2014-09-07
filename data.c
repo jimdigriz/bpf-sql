@@ -1,11 +1,11 @@
 #include <stdint.h>
 #include <stdlib.h>
-#include <error.h>
 #include <errno.h>
 #include <sysexits.h>
 #include <assert.h>
 #include <string.h>
 
+#include "bpf-sql.h"
 #include "data.h"
 #include "murmur3.h"
 
@@ -17,15 +17,15 @@ static void data_newrecord(datag_t *G, data_t *node)
 
 	node->R = realloc(node->R, (n+1) * sizeof(record_t));
 	if (!node->R)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "realloc(node->R)");
+		ERROR0(EX_OSERR, "realloc(node->R)");
 
 	node->R[n].k = calloc(G->nk, sizeof(int64_t));
 	if (!node->R[n].k)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(node->R[n].k)");
+		ERROR0(EX_OSERR, "calloc(node->R[n].k)");
 
 	node->R[n].d = calloc(G->nd, sizeof(int64_t));
 	if (!node->R[n].d)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(node->R[n].d)");
+		ERROR0(EX_OSERR, "calloc(node->R[n].d)");
 
 	node->nR++;
 }
@@ -35,11 +35,11 @@ void data_init(datag_t **G, int nk, int nd) {
 
 	*G = calloc(1, sizeof(datag_t));
 	if (!*G)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(*G)");
+		ERROR0(EX_OSERR, "calloc(*G)");
 
 	(*G)->R = calloc(1, (nk+nd)*sizeof(int64_t));
 	if (!(*G)->R)
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc((*G)->R)");
+		ERROR0(EX_OSERR, "calloc((*G)->R)");
 
 	(*G)->nk = nk;
 	(*G)->nd = nd;
@@ -80,7 +80,7 @@ static record_t *data_fetch(datag_t *G, int mode)
 		data_t **cptr = &node->c;
 		*cptr = calloc(1<<CMASK, sizeof(data_t));
 		if (!*cptr)
-			error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "calloc(*cptr)");
+			ERROR0(EX_OSERR, "calloc(*cptr)");
 
 		int k = (node->k >> (CMASK*h)) & ((1<<CMASK)-1);
 
@@ -93,7 +93,7 @@ static record_t *data_fetch(datag_t *G, int mode)
 		node->R = NULL;
 	}
 
-	error_at_line(EX_SOFTWARE, errno, __FILE__, __LINE__, "broke out of loop");
+	ERROR0(EX_SOFTWARE, "broke out of loop");
 	exit(1);
 }
 

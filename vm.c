@@ -9,7 +9,6 @@
 #include <assert.h>
 #include <endian.h>
 #include <sysexits.h>
-#include <error.h>
 #include <errno.h>
 #include <malloc.h>
 
@@ -38,7 +37,7 @@ int main(int argc, char **argv, char *env[])
 	for (int i = 0; i < bpf_sql.ncols; i++) {
 		bpf_sql.col[i].fd = open(bpf_sql.col[i].filename, O_RDONLY);
 		if (bpf_sql.col[i].fd == -1)
-			error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "open('%s')", bpf_sql.col[i].filename);
+			ERRORV(EX_OSERR, "open('%s')", bpf_sql.col[i].filename);
 
 		fstat(bpf_sql.col[i].fd, &bpf_sql.col[i].sb);
 
@@ -46,7 +45,7 @@ int main(int argc, char **argv, char *env[])
 
 		bpf_sql.col[i].m = mmap(NULL, bpf_sql.col[i].sb.st_size, PROT_READ, MAP_SHARED, bpf_sql.col[i].fd, 0);
 		if (bpf_sql.col[i].m == MAP_FAILED)
-			error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "mmap('%s')", bpf_sql.col[i].filename);
+			ERRORV(EX_OSERR, "mmap('%s')", bpf_sql.col[i].filename);
 
 		close(bpf_sql.col[i].fd);
 
@@ -57,22 +56,22 @@ int main(int argc, char **argv, char *env[])
 
 #ifndef NDEBUG
 	if (!mallopt(M_CHECK_ACTION, 0))
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "mallopt(M_CHECK_ACTION)");
+		ERROR0(EX_OSERR, "mallopt(M_CHECK_ACTION)");
 #endif
 	if (!mallopt(M_TOP_PAD, 64*1024*1024))
-		error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "mallopt(M_TOP_PAD)");
+		ERROR0(EX_OSERR, "mallopt(M_TOP_PAD)");
 
 	data_init(&G, bpf_sql.nkeys, bpf_sql.width);
 
 	for (int r=0; r < nrows; r++, C[0]++, C[1]++) {
 		int ret = run(G, &bpf_sql, C);
 		if (ret)
-			error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "run(r=%d) != 0", r);
+			ERRORV(EX_SOFTWARE, "run(r=%d) != 0", r);
 	}
 
 	for (int i = 0; i < bpf_sql.ncols; i++)
 		if (munmap(bpf_sql.col[i].m, bpf_sql.col[i].sb.st_size) == -1)
-			error_at_line(EX_OSERR, errno, __FILE__, __LINE__, "munmap('%s')", bpf_sql.col[i].filename);
+			ERRORV(EX_OSERR, "munmap('%s')", bpf_sql.col[i].filename);
 
 	data_iterate(G, print_cb);
 

@@ -1,10 +1,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <err.h>
 
 #include "bpf.h"
 
-#define	ARRAY_SIZE(x)	(sizeof(x)/sizeof(x[0]))
+#define	ARRAY_SIZE(x)			(sizeof(x)/sizeof(x[0]))
+
+#define	ERROR0(exitcode, format)	err(exitcode, "[%s:%d] " format, __FILE__, __LINE__)
+#define	ERRORV(exitcode, format, ...)	err(exitcode, "[%s:%d] " format, __FILE__, __LINE__, __VA_ARGS__)
 
 typedef struct {
 	char		*filename;

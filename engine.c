@@ -2,10 +2,6 @@
 #include <assert.h>
 #include <endian.h>
 #include <sysexits.h>
-#include <error.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
 
 #include "bpf-sql.h"
 #include "data.h"
@@ -48,7 +44,7 @@ int run(datag_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				A = be64toh(R[pc->k]);
 				break;
 			default:
-				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "LD: UNKNOWN MODE");
+				ERROR0(EX_SOFTWARE, "LD: UNKNOWN MODE");
 			}
 			break;
 		case BPF_LDX:
@@ -63,7 +59,7 @@ int run(datag_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				X = M[pc->k];
 				break;
 			default:
-				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "LDX: UNKNOWN MODE");
+				ERROR0(EX_SOFTWARE, "LDX: UNKNOWN MODE");
 			}
 			break;
 		case BPF_ST:
@@ -77,7 +73,7 @@ int run(datag_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				R[pc->k] = htobe64(A);
 				break;
 			default:
-				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "ST: UNKNOWN MODE");
+				ERROR0(EX_SOFTWARE, "ST: UNKNOWN MODE");
 			}
 			break;
 		case BPF_STX:
@@ -87,7 +83,7 @@ int run(datag_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				M[pc->k] = X;
 				break;
 			default:
-				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "STX: UNKNOWN MODE");
+				ERROR0(EX_SOFTWARE, "STX: UNKNOWN MODE");
 			}
 			break;
 		case BPF_ALU:
@@ -99,7 +95,7 @@ int run(datag_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				v = X;
 				break;
 			default:
-				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "ALU: UNKNOWN SRC");
+				ERROR0(EX_SOFTWARE, "ALU: UNKNOWN SRC");
 			}
 
 			switch (BPF_OP(pc->code)) {
@@ -131,7 +127,7 @@ int run(datag_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				A = -A;
 				break;
 			default:
-				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "ALU: UNKNOWN OP");
+				ERROR0(EX_SOFTWARE, "ALU: UNKNOWN OP");
 			}
 			break;
 		case BPF_JMP:
@@ -143,7 +139,7 @@ int run(datag_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				v = X;
 				break;
 			default:
-				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "JMP: UNKNOWN SRC");
+				ERROR0(EX_SOFTWARE, "JMP: UNKNOWN SRC");
 			}
 
 			switch (BPF_OP(pc->code)) {
@@ -163,7 +159,7 @@ int run(datag_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				pc += (A & v) ? pc->jt : pc->jf;
 				break;
 			default:
-				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "JMP: UNKNOWN OP");
+				ERROR0(EX_SOFTWARE, "JMP: UNKNOWN OP");
 			}
 			break;
 		case BPF_RET:
@@ -178,7 +174,7 @@ int run(datag_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				v = A;
 				break;
 			default:
-				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "RET: UNKNOWN RVAL");
+				ERROR0(EX_SOFTWARE, "RET: UNKNOWN RVAL");
 			}
 
 			return v;
@@ -197,11 +193,11 @@ int run(datag_t *G, const bpf_sql_t *bpf_sql, const int64_t **C)
 				data_store(G);
 				break;
 			default:
-				error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "MISC: UNKNOWN MISCOP");
+				ERROR0(EX_SOFTWARE, "MISC: UNKNOWN MISCOP");
 			}
 			break;
 		default:
-			error_at_line(EX_SOFTWARE, 0, __FILE__, __LINE__, "UNKNOWN CLASS");
+			ERROR0(EX_SOFTWARE, "UNKNOWN CLASS");
 		}
 	}
 }
