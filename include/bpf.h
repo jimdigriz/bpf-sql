@@ -1,5 +1,8 @@
 /* originally based on pcap/bpf.h */
 
+#ifndef __BPF_SQL_BPF_H__
+#define __BPF_SQL_BPF_H__
+
 /*
  * The instruction encodings.
  */
@@ -84,3 +87,5 @@ struct bpf_insn {
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).
  */
 #define BPF_MEMWORDS 16
+
+#endif	/* __BPF_SQL_BPF_H__ */

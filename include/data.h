@@ -1,42 +1,53 @@
 #include <limits.h>
 #include <stdint.h>
 
+#ifndef __BPF_SQL_DATA_H__
+#define __BPF_SQL_DATA_H__
+
 /* 4 gives good speed and sane RAM usage */
 #define	CMASK	4
 /* KEYSIZE must be multiple of CMASK */
-#define KEYSIZE	CHAR_BIT*sizeof(((data_t *)0)->k)
+#define KEYSIZE	CHAR_BIT*sizeof(((data *)0)->k)
 
-typedef struct {
-	int64_t		*k;
-	int64_t		*d;
-} record_t;
+struct record {
+	int64_t			*k;	/* key */
 
-struct data_t {
-	uint32_t	k;
-
-	struct data_t	*c;
-
-	int		nR;
-	record_t	*R;
-};
-typedef struct data_t data_t;
-
-struct datag_t {
-	struct data_t	D;
-
-	int64_t		*R;
-
-	int		nk;
-	int		nd;
-};
-typedef struct datag_t datag_t;
-
-struct path {
-	data_t	*d;
-	int	o;
+	union {
+		struct trie	*t;	/* TRIE */
+		int64_t		*d;	/* DATA - actual data */
+	}			r;	/* record */
 };
 
-void data_init(datag_t **, int, int);
-void data_load(datag_t *);
-void data_store(datag_t *);
-void data_iterate(datag_t *, void (*)(const record_t *));
+struct data_desc {
+	enum {
+		TRIE,
+		DATA,			/* 'end' componment (NON ZERO!) */
+	}			t;	/* type */
+	int			w;	/* width */
+};
+
+struct data {
+	struct record		r;	/* root record */
+
+	int64_t			*wR;	/* R register width */
+	int64_t			*R;	/* R register */
+
+	int			nd;	/* number of desc */
+	struct data_desc	*d;	/* record description */
+};
+
+struct trie {
+	uint32_t		k;	/* H(key) */
+
+	struct trie		*c;	/* children */
+
+	int			nR;	/* number of records */
+	struct record		*R;	/* records */
+};
+
+void data_init(struct data **, int, struct data_desc *);
+void data_load(struct data *);
+void data_store(struct data *);
+void data_iterate(struct data *, void (*)(const struct data *, const int64_t *));
+
+#endif	/* __BPF_SQL_DATA_H__ */

@@ -13,18 +13,17 @@
 #include <malloc.h>
 
 #include "bpf-sql.h"
-#include "program.h"
 #include "data.h"
 #include "engine.h"
 
-datag_t *G;
+struct data *G;
 
-static void print_cb(const record_t *R)
+extern struct bpf_sql bpf_sql;
+
+static void print_cb(const struct data *G, const int64_t *R)
 {
-	for (int i = 0; i < bpf_sql.nkeys; i++)
-		printf("%" PRId64 "\t", be64toh(R->k[i]));
-	for (int i = 0; i < bpf_sql.width; i++)
-		printf("%" PRId64 "\t", be64toh(R->d[i]));
+	for (int i = 0; i < G->wR; i++)
+		printf("%" PRId64 "\t", be64toh(R[i]));
 	printf("\n");
 }
 
@@ -61,10 +60,10 @@ int main(int argc, char **argv, char *env[])
 	if (!mallopt(M_TOP_PAD, 64*1024*1024))
 		ERROR0(EX_OSERR, "mallopt(M_TOP_PAD)");
 
-	data_init(&G, bpf_sql.nkeys, bpf_sql.width);
+	data_init(&G, bpf_sql.ndesc, bpf_sql.desc);
 
 	for (int r = 0; r < nrows; r++, C[0]++, C[1]++) {
-		int ret = run(G, &bpf_sql, C);
+		int ret = run(&bpf_sql, G, C);
 
 		if (ret)
 			ERRORV(EX_SOFTWARE, "run(r=%d) != 0", r);
