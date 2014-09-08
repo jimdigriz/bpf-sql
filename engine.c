@@ -41,7 +41,7 @@ int run(const struct bpf_sql *bpf_sql, struct data *G, const int64_t **C)
 				A = M[pc->k];
 				break;
 			case BPF_REC:
-				assert(pc->k < G->width);
+				assert(pc->k < G->wR);
 				A = be64toh(R[pc->k]);
 				break;
 			default:
@@ -70,7 +70,7 @@ int run(const struct bpf_sql *bpf_sql, struct data *G, const int64_t **C)
 				M[pc->k] = A;
 				break;
 			case BPF_REC:
-				assert(pc->k < G->width);
+				assert(pc->k < G->wR);
 				R[pc->k] = htobe64(A);
 				break;
 			default:

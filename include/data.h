@@ -7,7 +7,7 @@
 /* 4 gives good speed and sane RAM usage */
 #define	CMASK	4
 /* KEYSIZE must be multiple of CMASK */
-#define KEYSIZE	CHAR_BIT*sizeof(((data *)0)->k)
+#define KEYSIZE	CHAR_BIT*sizeof(((struct record *)0)->k)
 
 struct record {
 	int64_t			*k;	/* key */

@@ -72,9 +72,9 @@ The `R[]` register is special as it stores records loaded in and from G, and is 
 For example, if `nkeys` is 2 and `width` is 3, then the following plays out as such:
 
  1. set the registers `R[0]=7` and `R[1]=2`
- 1. call `BPF_MISC+BPF_LDR` to fetch the record, as it does not exist, this is a NOOP
+ 1. call `BPF_MISC+BPF_LDR` to fetch the record, as it does not exist, it is created and initialised to zero
  1. set `R[2]=-10`, set `R[3]=3` and `R[4]=18`
- 1. call `BPF_MISC+BPF_STR` to store the record, as it does not exist, it is automatically created
+ 1. call `BPF_MISC+BPF_STR` to store the record, as it exists, it is updated
  1. call `BPF_RET`
 
 This will in the output create the resulting row:
@@ -85,7 +85,7 @@ Where `7,2` make up your key, and `-10,3,18` is the result data associated to it
 
 ### Notes
 
- * if `BPF_MISC+BPF_LDR` cannot find the record, then the data portion of `R` is set to [*negative* zero](http://en.wikipedia.org/wiki/Signed_zero)
+ * if `BPF_MISC+BPF_LDR` cannot find the record, then the data portion of `R` is initialised to [*negative* zero](http://en.wikipedia.org/wiki/Signed_zero) and the record is created
  * if you call `BPF_RET` before calling `BPF_MISC+BPF_STR`, your changes are discarded
  * records cannot be deleted once created
  * you *can* create and update several records for a single run of your program over `C[]`

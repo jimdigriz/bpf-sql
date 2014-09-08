@@ -9,28 +9,21 @@
 #include "data.h"
 #include "murmur3.h"
 
-enum {
-	RDWR,
-	RDONLY,
-};
-
-static void data_newrecord(struct data *G, struct trie *node)
+static void data_addrecord(struct trie *t, int w)
 {
-	int n = node->nR;
+	int n = t->nR;
 
-	node->R = realloc(node->R, (n+1) * sizeof(struct record));
-	if (!node->R)
-		ERROR0(EX_OSERR, "realloc(node->R)");
+	t->R = realloc(t->R, (n+1) * sizeof(struct record));
+	if (!t->R)
+		ERROR0(EX_OSERR, "realloc(t->R)");
 
-	node->R[n].k = calloc(G->width, sizeof(int64_t));
-	if (!node->R[n].k)
-		ERROR0(EX_OSERR, "calloc(node->R[n].k)");
+	memset(&t->R[n], 0, sizeof(struct record));
 
-	node->R[n].d = calloc(G->nd, sizeof(int64_t));
-	if (!node->R[n].d)
-		ERROR0(EX_OSERR, "calloc(node->R[n].d)");
+	t->R[n].k = calloc(w, sizeof(int64_t));
+	if (!t->R[n].k)
+		ERROR0(EX_OSERR, "calloc(t->R[n].k)");
 
-	node->nR++;
+	t->nR++;
 }
 
 void data_init(struct data **G, int ndesc, struct data_desc *desc)
@@ -54,39 +47,32 @@ void data_init(struct data **G, int ndesc, struct data_desc *desc)
 	(*G)->d = desc;
 }
 
-static struct record *trie_fetch(struct trie *node, int mode)
+static struct record *trie_fetch(struct trie *node, int64_t *R, int w)
 {
-	uint32_t key = murmur3_32((char *)&G->R[0], G->nk*sizeof(int64_t), 0);
+	uint32_t key = murmur3_32((char *)R, w*sizeof(int64_t), 0);
 
 	for (int h = 0; h <= KEYSIZE/CMASK; node = &node->c[(key >> (CMASK*h)) & ((1<<CMASK)-1)], h++) {
 		if (node->c)
 			continue;
 
-		if (node->nR == 0) {
-			if (mode == RDONLY)
-				return NULL;
-
+		if (node->nR == 0)
 			node->k = key;
-		}
 
 		if (node->k == key) {
 			int n;
 
 			for (n = 0; n < node->nR; n++)
-				if (!memcmp(node->R[n].k, &G->R[0], G->nk*sizeof(int64_t)))
+				if (!memcmp(node->R[n].k, R, w*sizeof(int64_t)))
 					return &node->R[n];
 
-			if (mode == RDONLY)
-				return NULL;
-
-			data_newrecord(G, node);
-			memcpy(node->R[n].k, &G->R[0], G->nk*sizeof(int64_t));
+			data_addrecord(node, w);
+			memcpy(node->R[n].k, R, w*sizeof(int64_t));
 
 			return &node->R[n];
 		}
 
-		struct data **cptr = &node->c;
-		*cptr = calloc(1<<CMASK, sizeof(struct data));
+		struct trie **cptr = &node->c;
+		*cptr = calloc(1<<CMASK, sizeof(struct trie));
 		if (!*cptr)
 			ERROR0(EX_OSERR, "calloc(*cptr)");
 
@@ -105,14 +91,14 @@ static struct record *trie_fetch(struct trie *node, int mode)
 	exit(1);
 }
 
-void data_load(struct data *G)
+static struct record *data_fetch(struct data *G)
 {
-	struct record *r = &G->r;
+	struct record *R = &G->r;
 
-	for (int o = 0, i = 0; i < G->nd - 1; o += G->d[i].w, i++) {
+	for (int i = 0, o = 0; i < G->nd - 1; i++, o += G->d[i].w) {
 		switch (G->d[i].t) {
 		case TRIE:
-			r = data_fetch(r->t, RDONLY, &R[o], G->d[i].w);
+			R = trie_fetch(R->r.t, &G->R[o], G->d[i].w);
 			break;
 		case DATA:
 			ERROR0(EX_SOFTWARE, "should not see DATA type here");
@@ -122,23 +108,43 @@ void data_load(struct data *G)
 		}
 	}
 
-	/* make use of final DATA if record exists */
-	if (r)
-		memcpy(&G->R[o], r->d, G->d[G->nd-1].w*sizeof(int64_t));
-	else
-		memset(&G->R[o], -0, G->d[G->nd-1].w*sizeof(int64_t));	/* negative zero */
+	return R;
+}
+
+void data_load(struct data *G)
+{
+	struct record *R = data_fetch(G);
+	int w = G->d[G->nd].w;
+	int o = G->wR - w;
+
+	if (!R->r.d) {
+		R->r.d = calloc(w, sizeof(int64_t));
+		if (!R->r.d)
+			ERROR0(EX_OSERR, "calloc(R->r.d)");
+		memset(R->r.d, -0, w*sizeof(int64_t));	/* negative zero */
+	}
+
+	memcpy(&G->R[o], R->r.d, w*sizeof(int64_t));
 }
 
 void data_store(struct data *G)
 {
-	struct record *r = data_fetch(G, RDWR);
+	struct record *R = data_fetch(G);
+	int w = G->d[G->nd].w;
+	int o = G->wR - w;
 
-	memcpy(r->d, &G->R[G->nk], G->nd*sizeof(int64_t));
+	if (!R->r.d) {
+		R->r.d = calloc(w, sizeof(int64_t));
+		if (!R->r.d)
+			ERROR0(EX_OSERR, "calloc(R->r.d)");
+	}
+
+	memcpy(R->r.d, &G->R[o], w*sizeof(int64_t));
 }
 
 void data_iterate(struct data *G, void (*cb)(const struct data *, const int64_t *))
 {
-	struct data *node = &G->D;
+	struct trie *node = &G->D;
 	struct {
 		struct trie	*d;
 		int		o;
