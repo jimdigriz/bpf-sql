@@ -161,7 +161,7 @@ static void _data_iterate(struct data *G,
 {
 	memcpy(&G->R[o], rR->k, G->d[n].w*sizeof(int64_t));
 
-	if (n == G->nd-2) {
+	if (n == G->nd - 2) {
 		memcpy(&G->R[G->nd-1], rR->r.d, G->d[G->nd-1].w*sizeof(int64_t));
 		cb(G, G->R);
 		return;
