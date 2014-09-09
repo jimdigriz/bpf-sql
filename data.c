@@ -59,44 +59,44 @@ void data_init(struct data **G, int ndesc, struct data_desc *desc)
 	(*G)->d = desc;
 }
 
-static struct record *trie_fetch(struct trie *node, int64_t *R, int w)
+static struct record *trie_fetch(struct trie *t, int64_t *R, int w)
 {
 	uint32_t key = murmur3_32((char *)R, w*sizeof(int64_t), 0);
 
-	for (int h = 0; h <= KEYSIZE/CMASK; node = &node->c[(key >> (CMASK*h)) & ((1<<CMASK)-1)], h++) {
-		if (node->c)
+	for (int h = 0; h <= KEYSIZE/CMASK; t = &t->c[(key >> (CMASK*h)) & ((1<<CMASK)-1)], h++) {
+		if (t->c)
 			continue;
 
-		if (node->nR == 0)
-			node->Hk = key;
+		if (t->nR == 0)
+			t->Hk = key;
 
-		if (node->Hk == key) {
+		if (t->Hk == key) {
 			int n;
 
-			for (n = 0; n < node->nR; n++)
-				if (!memcmp(node->R[n].k, R, w*sizeof(int64_t)))
-					return &node->R[n];
+			for (n = 0; n < t->nR; n++)
+				if (!memcmp(t->R[n].k, R, w*sizeof(int64_t)))
+					return &t->R[n];
 
-			data_addrecord(node, w);
-			memcpy(node->R[n].k, R, w*sizeof(int64_t));
+			data_addrecord(t, w);
+			memcpy(t->R[n].k, R, w*sizeof(int64_t));
 
-			return &node->R[n];
+			return &t->R[n];
 		}
 
-		struct trie **cptr = &node->c;
+		struct trie **cptr = &t->c;
 		*cptr = calloc(1<<CMASK, sizeof(struct trie));
 		if (!*cptr)
 			ERROR0(EX_OSERR, "calloc(*cptr)");
 
-		int k = (node->Hk >> (CMASK*h)) & ((1<<CMASK)-1);
+		int k = (t->Hk >> (CMASK*h)) & ((1<<CMASK)-1);
 
-		node->c[k].Hk = node->Hk;
-		node->c[k].nR = node->nR;
-		node->c[k].R = node->R;
+		t->c[k].Hk = t->Hk;
+		t->c[k].nR = t->nR;
+		t->c[k].R = t->R;
 
-		node->Hk = 0;
-		node->nR = 0;
-		node->R = NULL;
+		t->Hk = 0;
+		t->nR = 0;
+		t->R = NULL;
 	}
 
 	ERROR0(EX_SOFTWARE, "broke out of loop");
