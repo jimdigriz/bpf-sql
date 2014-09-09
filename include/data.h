@@ -4,11 +4,6 @@
 #ifndef __BPF_SQL_DATA_H__
 #define __BPF_SQL_DATA_H__
 
-/* 4 gives good speed and sane RAM usage */
-#define	CMASK	4
-/* KEYSIZE must be multiple of CMASK */
-#define KEYSIZE	CHAR_BIT*sizeof(((struct record *)0)->k)
-
 struct record {
 	int64_t			*k;	/* key */
 
@@ -35,6 +30,11 @@ struct data {
 	int			nd;	/* number of desc */
 	struct data_desc	*d;	/* record description */
 };
+
+/* 4 gives good speed and sane RAM usage */
+#define	CMASK	4
+/* KEYSIZE must be multiple of CMASK */
+#define KEYSIZE	CHAR_BIT*sizeof(((struct trie *)0)->Hk)
 
 struct trie {
 	uint32_t		Hk;	/* H(key) */
