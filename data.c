@@ -152,39 +152,72 @@ void data_store(struct data *G)
 	memcpy(R->r.d, &G->R[o], w*sizeof(int64_t));
 }
 
-void data_iterate(struct data *G, void (*cb)(const struct data *, const int64_t *))
+static void trie_iterate(struct data *,
+			const int, const int,
+			const struct trie *,
+			void (*)(const struct data *, const int64_t *));
+
+static void _data_iterate(struct data *G,
+			const int o, const int n,
+			const struct record *rR,
+			void (*cb)(const struct data *, const int64_t *))
 {
-	struct trie *node = &G->D;
+	if (!n)
+		memcpy(&G->R[o], rR->r.d, G->d[n].w*sizeof(int64_t));
+
+	switch (G->d[n].t) {
+	case TRIE:
+		trie_iterate(G, o, n, rR->r.t, cb);
+		break;
+	case DATA:
+		cb(G, G->R);
+		break;
+	default:
+		ERRORV(EX_SOFTWARE, "unknown data type: %d", G->d[n].t);
+	}
+}
+
+void data_iterate(struct data *G,
+			void (*cb)(const struct data *, const int64_t *))
+{
+	_data_iterate(G, 0, 0, &G->rR, cb);
+}
+
+static void trie_iterate(struct data *G,
+			const int o, const int n,
+			const struct trie *t,
+			void (*cb)(const struct data *, const int64_t *))
+{
 	struct {
-		struct trie	*d;
-		int		o;
+		const struct trie	*t;
+		int			o;
 	} path[(KEYSIZE/CMASK) + 1];
 	int h = 0;
 
-	path[0].d = node;
+	path[0].t = t;
 	path[0].o = 0;
 
 	while (h > -1) {
-		if (path[h].d->nR) {
-			for (int n = 0; n < path[h].d->nR; n++)
-				cb(&path[h].d->R[n]);
+		if (path[h].t->nR) {
+			for (int n = 0; n < path[h].t->nR; n++)
+				_data_iterate(G, o+n, n+1, &path[h].t->R[n], cb);
 
 			h--;
 			continue;
 		}
 
-		if (!path[h].d->c) {
+		if (!path[h].t->c) {
 			h--;
 			continue;
 		}
 
 		while (path[h].o < 1<<CMASK) {
-			struct data *d = &path[h].d->c[path[h].o];
+			struct trie *t = &path[h].t->c[path[h].o];
 
 			path[h].o++;
 			h++;
 
-			path[h].d = d;
+			path[h].t = t;
 			path[h].o = 0;
 
 			break;
