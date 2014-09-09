@@ -36,6 +36,19 @@ void data_init(struct data **G, int ndesc, struct data_desc *desc)
 	if (!*G)
 		ERROR0(EX_OSERR, "calloc(*G)");
 
+	switch (desc[0].t) {
+	case TRIE:
+		(*G)->rR.r.t = calloc(1, sizeof(struct trie));
+		if (!(*G)->rR.r.t)
+			ERROR0(EX_OSERR, "calloc((*G)->rR.r.t)");
+		break;
+	case DATA:
+		ERROR0(EX_SOFTWARE, "should not see DATA type here");
+		break;
+	default:
+		ERRORV(EX_SOFTWARE, "unknown data type: %d", desc[0].t);
+	}
+
 	for (int i = 0; i < ndesc; i++)
 		(*G)->wR += desc[i].w;
 
@@ -56,9 +69,9 @@ static struct record *trie_fetch(struct trie *node, int64_t *R, int w)
 			continue;
 
 		if (node->nR == 0)
-			node->k = key;
+			node->Hk = key;
 
-		if (node->k == key) {
+		if (node->Hk == key) {
 			int n;
 
 			for (n = 0; n < node->nR; n++)
@@ -76,13 +89,13 @@ static struct record *trie_fetch(struct trie *node, int64_t *R, int w)
 		if (!*cptr)
 			ERROR0(EX_OSERR, "calloc(*cptr)");
 
-		int k = (node->k >> (CMASK*h)) & ((1<<CMASK)-1);
+		int k = (node->Hk >> (CMASK*h)) & ((1<<CMASK)-1);
 
-		node->c[k].k = node->k;
+		node->c[k].Hk = node->Hk;
 		node->c[k].nR = node->nR;
 		node->c[k].R = node->R;
 
-		node->k = 0;
+		node->Hk = 0;
 		node->nR = 0;
 		node->R = NULL;
 	}
@@ -93,7 +106,7 @@ static struct record *trie_fetch(struct trie *node, int64_t *R, int w)
 
 static struct record *data_fetch(struct data *G)
 {
-	struct record *R = &G->r;
+	struct record *R = &G->rR;
 
 	for (int i = 0, o = 0; i < G->nd - 1; i++, o += G->d[i].w) {
 		switch (G->d[i].t) {

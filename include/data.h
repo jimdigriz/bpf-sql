@@ -27,7 +27,7 @@ struct data_desc {
 };
 
 struct data {
-	struct record		r;	/* root record */
+	struct record		rR;	/* root record */
 
 	int64_t			wR;	/* R register width */
 	int64_t			*R;	/* R register */
@@ -37,7 +37,7 @@ struct data {
 };
 
 struct trie {
-	uint32_t		k;	/* H(key) */
+	uint32_t		Hk;	/* H(key) */
 
 	struct trie		*c;	/* children */
 
