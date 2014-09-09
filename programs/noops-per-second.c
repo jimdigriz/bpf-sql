@@ -20,7 +20,7 @@ static struct bpf_program bpf_prog = {
 	.bf_insns	= bpf_insns,
 };
 
-static column columns[] = {
+static struct column columns[] = {
 	{	/* C[0] */
 		.filename	= "sample-data/day16265.tim.bin",
 	},
@@ -29,7 +29,7 @@ static column columns[] = {
 	},
 };
 
-static data_desc desc[] = {
+static struct data_desc desc[] = {
 	{
 		.t		= TRIE,
 		.w		= 1,
@@ -40,7 +40,7 @@ static data_desc desc[] = {
 	},
 };
 
-bpf_sql bpf_sql = {
+struct bpf_sql bpf_sql = {
 	.ndesc	= ARRAY_SIZE(desc),
 	.desc	= desc,
 
