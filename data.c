@@ -162,12 +162,16 @@ static void _data_iterate(struct data *G,
 			const struct record *rR,
 			void (*cb)(const struct data *, const int64_t *))
 {
-	if (!n)
-		memcpy(&G->R[o], rR->r.d, G->d[n].w*sizeof(int64_t));
+	if (n > -1) {
+		if (G->d[n].t == DATA)
+			memcpy(&G->R[o], rR->r.d, G->d[n].w*sizeof(int64_t));
+		else
+			memcpy(&G->R[o], rR->k,   G->d[n].w*sizeof(int64_t));
+	}
 
 	switch (G->d[n].t) {
 	case TRIE:
-		trie_iterate(G, o, n, rR->r.t, cb);
+		trie_iterate(G, o+G->d[n+1].w, n+1, rR->r.t, cb);
 		break;
 	case DATA:
 		cb(G, G->R);
@@ -180,7 +184,7 @@ static void _data_iterate(struct data *G,
 void data_iterate(struct data *G,
 			void (*cb)(const struct data *, const int64_t *))
 {
-	_data_iterate(G, 0, 0, &G->rR, cb);
+	_data_iterate(G, -G->d[0].w, -1, &G->rR, cb);
 }
 
 static void trie_iterate(struct data *G,
@@ -200,7 +204,7 @@ static void trie_iterate(struct data *G,
 	while (h > -1) {
 		if (path[h].t->nR) {
 			for (int n = 0; n < path[h].t->nR; n++)
-				_data_iterate(G, o+n, n+1, &path[h].t->R[n], cb);
+				_data_iterate(G, o, n, &path[h].t->R[n], cb);
 
 			h--;
 			continue;
