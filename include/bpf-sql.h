@@ -18,7 +18,7 @@ struct column {
 	char			*filename;
 	int			fd;
 	struct stat		sb;
-	int64_t 			*m;
+	int64_t			*m;
 	int64_t			*C;
 };
 

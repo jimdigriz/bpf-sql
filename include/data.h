@@ -34,7 +34,7 @@ struct data {
 /* 4 gives good speed and sane RAM usage */
 #define	CMASK	4
 /* KEYSIZE must be multiple of CMASK */
-#define KEYSIZE	CHAR_BIT*sizeof(((struct trie *)0)->Hk)
+#define KEYSIZE	(CHAR_BIT*sizeof(((struct trie *)0)->Hk))
 
 struct trie {
 	uint32_t		Hk;	/* H(key) */
