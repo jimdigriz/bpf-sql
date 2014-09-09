@@ -203,8 +203,8 @@ static void trie_iterate(struct data *G,
 
 	while (h > -1) {
 		if (path[h].t->nR) {
-			for (int n = 0; n < path[h].t->nR; n++)
-				_data_iterate(G, o, n, &path[h].t->R[n], cb);
+			for (int i = 0; i < path[h].t->nR; i++)
+				_data_iterate(G, o, n, &path[h].t->R[i], cb);
 
 			h--;
 			continue;
@@ -216,12 +216,12 @@ static void trie_iterate(struct data *G,
 		}
 
 		while (path[h].o < 1<<CMASK) {
-			struct trie *t = &path[h].t->c[path[h].o];
+			struct trie *tt = &path[h].t->c[path[h].o];
 
 			path[h].o++;
 			h++;
 
-			path[h].t = t;
+			path[h].t = tt;
 			path[h].o = 0;
 
 			break;
