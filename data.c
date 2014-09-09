@@ -44,7 +44,6 @@ void data_init(struct data **G, int ndesc, struct data_desc *desc)
 		break;
 	case DATA:
 		ERROR0(EX_SOFTWARE, "should not see DATA type here");
-		break;
 	default:
 		ERRORV(EX_SOFTWARE, "unknown data type: %d", desc[0].t);
 	}
@@ -115,7 +114,6 @@ static struct record *data_fetch(struct data *G)
 			break;
 		case DATA:
 			ERROR0(EX_SOFTWARE, "should not see DATA type here");
-			break;
 		default:
 			ERRORV(EX_SOFTWARE, "unknown data type: %d", G->d[i].t);
 		}
