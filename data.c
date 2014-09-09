@@ -100,7 +100,6 @@ static struct record *trie_fetch(struct trie *node, int64_t *R, int w)
 	}
 
 	ERROR0(EX_SOFTWARE, "broke out of loop");
-	exit(1);
 }
 
 static struct record *data_fetch(struct data *G)
