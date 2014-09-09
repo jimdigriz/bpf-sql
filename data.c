@@ -30,7 +30,8 @@ void data_init(struct data **G, int ndesc, struct data_desc *desc)
 {
 	assert(KEYSIZE % CMASK == 0);
 
-	assert(desc[ndesc-1].t = DATA);
+	assert(desc[0].t != DATA);
+	assert(desc[ndesc-1].t == DATA);
 
 	*G = calloc(1, sizeof(struct data));
 	if (!*G)
@@ -42,8 +43,6 @@ void data_init(struct data **G, int ndesc, struct data_desc *desc)
 		if (!(*G)->rR.r.t)
 			ERROR0(EX_OSERR, "calloc((*G)->rR.r.t)");
 		break;
-	case DATA:
-		ERROR0(EX_SOFTWARE, "should not see DATA type here");
 	default:
 		ERRORV(EX_SOFTWARE, "unknown data type: %d", desc[0].t);
 	}
@@ -111,8 +110,6 @@ static struct record *data_fetch(struct data *G)
 		case TRIE:
 			R = trie_fetch(R->r.t, &G->R[o], G->d[i].w);
 			break;
-		case DATA:
-			ERROR0(EX_SOFTWARE, "should not see DATA type here");
 		default:
 			ERRORV(EX_SOFTWARE, "unknown data type: %d", G->d[i].t);
 		}
@@ -162,18 +159,13 @@ static void _data_iterate(struct data *G,
 			const struct record *rR,
 			void (*cb)(const struct data *, const int64_t *))
 {
-	if (n > -1) {
-		if (G->d[n].t == DATA)
-			memcpy(&G->R[o], rR->r.d, G->d[n].w*sizeof(int64_t));
-		else
-			memcpy(&G->R[o], rR->k,   G->d[n].w*sizeof(int64_t));
-	}
-
 	switch (G->d[n].t) {
 	case TRIE:
-		trie_iterate(G, o+G->d[n+1].w, n+1, rR->r.t, cb);
+		memcpy(&G->R[o], rR->k, G->d[n].w*sizeof(int64_t));
+		trie_iterate(G, o+G->d[n].w, n+1, rR->r.t, cb);
 		break;
 	case DATA:
+		memcpy(&G->R[o], rR->r.d, G->d[n].w*sizeof(int64_t));
 		cb(G, G->R);
 		break;
 	default:
@@ -184,7 +176,13 @@ static void _data_iterate(struct data *G,
 void data_iterate(struct data *G,
 			void (*cb)(const struct data *, const int64_t *))
 {
-	_data_iterate(G, -G->d[0].w, -1, &G->rR, cb);
+	switch (G->d[0].t) {
+	case TRIE:
+		trie_iterate(G, 0, 0, G->rR.r.t, cb);
+		break;
+	default:
+		ERRORV(EX_SOFTWARE, "unknown data type: %d", G->d[0].t);
+	}
 }
 
 static void trie_iterate(struct data *G,
