@@ -124,7 +124,7 @@ static struct record *data_fetch(struct data *G)
 void data_load(struct data *G)
 {
 	struct record *R = data_fetch(G);
-	int w = G->d[G->nd].w;
+	int w = G->d[G->nd-1].w;
 	int o = G->wR - w;
 
 	if (!R->r.d) {
@@ -140,7 +140,7 @@ void data_load(struct data *G)
 void data_store(struct data *G)
 {
 	struct record *R = data_fetch(G);
-	int w = G->d[G->nd].w;
+	int w = G->d[G->nd-1].w;
 	int o = G->wR - w;
 
 	if (!R->r.d) {
