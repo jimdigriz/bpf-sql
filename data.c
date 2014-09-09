@@ -159,17 +159,20 @@ static void _data_iterate(struct data *G,
 			const struct record *rR,
 			void (*cb)(const struct data *, const int64_t *))
 {
-	switch (G->d[n].t) {
+	memcpy(&G->R[o], rR->k, G->d[n].w*sizeof(int64_t));
+
+	if (n == G->nd-2) {
+		memcpy(&G->R[G->nd-1], rR->r.d, G->d[G->nd-1].w*sizeof(int64_t));
+		cb(G, G->R);
+		return;
+	}
+
+	switch (G->d[n+1].t) {
 	case TRIE:
-		memcpy(&G->R[o], rR->k, G->d[n].w*sizeof(int64_t));
 		trie_iterate(G, o+G->d[n].w, n+1, rR->r.t, cb);
 		break;
-	case DATA:
-		memcpy(&G->R[o], rR->r.d, G->d[n].w*sizeof(int64_t));
-		cb(G, G->R);
-		break;
 	default:
-		ERRORV(EX_SOFTWARE, "unknown data type: %d", G->d[n].t);
+		ERRORV(EX_SOFTWARE, "unknown data type: %d", G->d[n+1].t);
 	}
 }
 
