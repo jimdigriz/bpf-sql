@@ -15,10 +15,9 @@
 #include "bpf-sql.h"
 #include "data.h"
 #include "engine.h"
+#include "program.h"
 
 struct data *G;
-
-extern struct bpf_sql bpf_sql;
 
 static void print_cb(const struct data *G, const int64_t *R)
 {
