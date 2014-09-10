@@ -62,7 +62,7 @@ void data_init(struct data **G, int ndesc, struct data_desc *desc)
 
 static struct record *trie_fetch(struct data *G, struct trie *t, int64_t *R, int w)
 {
-	uint32_t key = murmur3_32((char *)R, w*sizeof(int64_t), 0);
+	uint32_t key = murmur3_32((char *)R, w*sizeof(int64_t), 0) >> KEYSHIFT;
 
 	for (int h = 0; h <= KEYSIZE/CMASK; t = &t->c[(key >> (CMASK*h)) & ((1<<CMASK)-1)], h++) {
 		if (t->c)

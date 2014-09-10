@@ -40,10 +40,16 @@ struct data {
 	} stats;
 };
 
-/* 4 gives good speed and sane RAM usage */
-#define	CMASK	4
 /* KEYSIZE must be multiple of CMASK */
-#define KEYSIZE	(CHAR_BIT*sizeof(((struct trie *)0)->Hk))
+#define KEYSIZE		(CHAR_BIT*sizeof(((struct trie *)0)->Hk))
+
+/* TUNEABLES */
+/* how deep do you like your trie, lower makes it deeper */
+/* 4 gives good speed and sane RAM usage at 10m records */
+#define	CMASK		4
+/* max trie depth at expense of collisions */
+/* 8 has no speed penalty at 10m records at half the RAM */
+#define KEYSHIFT	8;
 
 struct trie {
 	uint32_t		Hk;	/* H(key) */
