@@ -72,10 +72,13 @@ int main(int argc, char **argv, char *env[])
 		if (munmap(bpf_sql.col[i].m, bpf_sql.col[i].sb.st_size) == -1)
 			ERRORV(EX_OSERR, "munmap('%s')", bpf_sql.col[i].filename);
 
-	fprintf(stderr, "stats: records=%d, tries=%d, avg trie depth=%0.2f, tries with records=%d\n",
-			G->stats.records, G->stats.tries,
-			(double)G->stats.sum_trie_depth/G->stats.records_in_tries,
-			G->stats.records_in_tries);
+	fprintf(stderr, "stats:	records=%d, tries=%d, avg trie depth=%0.2f\n"
+			"	records in tries=%d, records:tries=%0.2f:1\n",
+			G->stats.records,
+			G->stats.tries,
+			(double) G->stats.sum_trie_depth / G->stats.records_in_tries,
+			G->stats.records_in_tries,
+			(double) G->stats.records_in_tries / G->stats.tries);
 
 	data_iterate(G, print_cb);
 
