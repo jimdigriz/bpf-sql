@@ -22,8 +22,8 @@ struct data *G;
 static void print_cb(const struct data *G, const int64_t *R)
 {
 	for (int i = 0; i < G->wR; i++)
-		printf("%" PRId64 "\t", be64toh(R[i]));
-	printf("\n");
+		fprintf(stdout, "%" PRId64 "\t", be64toh(R[i]));
+	fprintf(stdout, "\n");
 }
 
 int main(int argc, char **argv, char *env[])
@@ -71,6 +71,10 @@ int main(int argc, char **argv, char *env[])
 	for (int i = 0; i < bpf_sql.ncols; i++)
 		if (munmap(bpf_sql.col[i].m, bpf_sql.col[i].sb.st_size) == -1)
 			ERRORV(EX_OSERR, "munmap('%s')", bpf_sql.col[i].filename);
+
+	fprintf(stderr, "stats: records=%d, tries=%d, records_in_tries=%d\n",
+			G->stats.records, G->stats.tries,
+			G->stats.records_in_tries);
 
 	data_iterate(G, print_cb);
 

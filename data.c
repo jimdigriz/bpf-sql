@@ -9,7 +9,7 @@
 #include "data.h"
 #include "murmur3.h"
 
-static void data_addrecord(struct trie *t, int w)
+static void data_addrecord(struct data *G, struct trie *t, int w)
 {
 	int n = t->nR;
 
@@ -24,6 +24,8 @@ static void data_addrecord(struct trie *t, int w)
 		ERROR0(EX_OSERR, "calloc(t->R[n].k)");
 
 	t->nR++;
+
+	G->stats.records++;
 }
 
 void data_init(struct data **G, int ndesc, struct data_desc *desc)
@@ -58,7 +60,7 @@ void data_init(struct data **G, int ndesc, struct data_desc *desc)
 	(*G)->d = desc;
 }
 
-static struct record *trie_fetch(struct trie *t, int64_t *R, int w)
+static struct record *trie_fetch(struct data *G, struct trie *t, int64_t *R, int w)
 {
 	uint32_t key = murmur3_32((char *)R, w*sizeof(int64_t), 0);
 
@@ -66,8 +68,10 @@ static struct record *trie_fetch(struct trie *t, int64_t *R, int w)
 		if (t->c)
 			continue;
 
-		if (t->nR == 0)
+		if (t->nR == 0) {
 			t->Hk = key;
+			G->stats.records_in_tries++;
+		}
 
 		if (t->Hk == key) {
 			int n;
@@ -76,7 +80,7 @@ static struct record *trie_fetch(struct trie *t, int64_t *R, int w)
 				if (!memcmp(t->R[n].k, R, w*sizeof(int64_t)))
 					return &t->R[n];
 
-			data_addrecord(t, w);
+			data_addrecord(G, t, w);
 			memcpy(t->R[n].k, R, w*sizeof(int64_t));
 
 			return &t->R[n];
@@ -96,6 +100,8 @@ static struct record *trie_fetch(struct trie *t, int64_t *R, int w)
 		t->Hk = 0;
 		t->nR = 0;
 		t->R = NULL;
+
+		G->stats.tries++;
 	}
 
 	ERROR0(EX_SOFTWARE, "broke out of loop");
@@ -108,7 +114,7 @@ static struct record *data_fetch(struct data *G)
 	for (int i = 0, o = 0; i < G->nd - 1; i++, o += G->d[i].w) {
 		switch (G->d[i].t) {
 		case TRIE:
-			R = trie_fetch(R->r.t, &G->R[o], G->d[i].w);
+			R = trie_fetch(G, R->r.t, &G->R[o], G->d[i].w);
 			break;
 		default:
 			ERRORV(EX_SOFTWARE, "unknown data type: %d", G->d[i].t);

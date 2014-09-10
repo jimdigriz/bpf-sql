@@ -29,6 +29,14 @@ struct data {
 
 	int			nd;	/* number of desc */
 	struct data_desc	*d;	/* record description */
+
+	struct {
+		int		records;
+
+		int		tries;
+
+		int		records_in_tries;
+	} stats;
 };
 
 /* 4 gives good speed and sane RAM usage */
