@@ -49,7 +49,7 @@ struct data {
 #define	CMASK		4
 /* max trie depth at expense of collisions */
 /* 8 has no speed penalty at 10m records at half the RAM */
-#define KEYSHIFT	0;
+#define KEYSHIFT	8;
 
 struct trie {
 	uint32_t		Hk;	/* H(key) */
