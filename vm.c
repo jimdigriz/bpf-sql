@@ -71,7 +71,7 @@ int main(int argc, char **argv, char *env[])
 	for (int i = 0; i < bpf_sql.ncols; i++)
 		if (munmap(bpf_sql.col[i].m, bpf_sql.col[i].sb.st_size) == -1)
 			ERRORV(EX_OSERR, "munmap('%s')", bpf_sql.col[i].filename);
-
+sleep(10);
 	data_iterate(G, print_cb);
 
 	return EX_OK;

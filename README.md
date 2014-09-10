@@ -85,7 +85,7 @@ Where `7,2` make up your key, and `-10,3,18` is the result data associated to it
 
 ### Notes
 
- * if `BPF_MISC+BPF_LDR` cannot find the record, then the data portion of `R` is initialised to [*negative* zero](http://en.wikipedia.org/wiki/Signed_zero) and the record is created
+ * if `BPF_MISC+BPF_LDR` cannot find the record, then the data portion of `R` is initialised to zero
  * if you call `BPF_RET` before calling `BPF_MISC+BPF_STR`, your changes are discarded
  * records cannot be deleted once created
  * you *can* create and update several records for a single run of your program over `C[]`
@@ -94,7 +94,8 @@ Where `7,2` make up your key, and `-10,3,18` is the result data associated to it
 
 In roughly order of importance:
 
- * does negative zero even work?
+ * only create records in `G` when `BPF_MISC+BPF_STR` is called, not when `BPF_MISC+BPF_LDR` is
+ * would it be helpful to be able to distingush between record existing or not, and how that would be done
  * tool to generate mock data to experiment with
  * add stepping debugging support
  * improve the profiling visibility

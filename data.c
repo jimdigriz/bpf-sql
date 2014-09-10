@@ -128,7 +128,7 @@ void data_load(struct data *G)
 		R->r.d = calloc(w, sizeof(int64_t));
 		if (!R->r.d)
 			ERROR0(EX_OSERR, "calloc(R->r.d)");
-		memset(R->r.d, -0, w*sizeof(int64_t));	/* negative zero */
+		memset(R->r.d, 0, w*sizeof(int64_t));
 	}
 
 	memcpy(&G->R[o], R->r.d, w*sizeof(int64_t));
