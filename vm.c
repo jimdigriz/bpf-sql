@@ -76,9 +76,9 @@ int main(int argc, char **argv, char *env[])
 			"	records in tries=%d, records:tries=%0.2f:1\n",
 			G->stats.records,
 			G->stats.tries,
-			(double) G->stats.sum_trie_depth / G->stats.records_in_tries,
-			G->stats.records_in_tries,
-			(double) G->stats.records_in_tries / G->stats.tries);
+			(double) G->stats.sum_trie_depth / G->stats.tries_with_records,
+			G->stats.tries_with_records,
+			(double) G->stats.records / G->stats.tries_with_records);
 
 	data_iterate(G, print_cb);
 

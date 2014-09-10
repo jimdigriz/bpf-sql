@@ -70,7 +70,7 @@ static struct record *trie_fetch(struct data *G, struct trie *t, int64_t *R, int
 
 		if (t->nR == 0) {
 			t->Hk = key;
-			G->stats.records_in_tries++;
+			G->stats.tries_with_records++;
 			G->stats.sum_trie_depth+=h;
 		}
 

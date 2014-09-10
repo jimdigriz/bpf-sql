@@ -35,7 +35,7 @@ struct data {
 
 		int		tries;
 
-		int		records_in_tries;
+		int		tries_with_records;
 		int		sum_trie_depth;
 	} stats;
 };
