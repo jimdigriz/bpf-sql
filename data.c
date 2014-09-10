@@ -71,6 +71,7 @@ static struct record *trie_fetch(struct data *G, struct trie *t, int64_t *R, int
 		if (t->nR == 0) {
 			t->Hk = key;
 			G->stats.records_in_tries++;
+			G->stats.sum_trie_depth+=h;
 		}
 
 		if (t->Hk == key) {
@@ -102,6 +103,7 @@ static struct record *trie_fetch(struct data *G, struct trie *t, int64_t *R, int
 		t->R = NULL;
 
 		G->stats.tries++;
+		G->stats.sum_trie_depth++;
 	}
 
 	ERROR0(EX_SOFTWARE, "broke out of loop");
