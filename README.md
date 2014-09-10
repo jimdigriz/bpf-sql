@@ -96,6 +96,7 @@ In roughly order of importance:
 
  * only create records in `G` when `BPF_MISC+BPF_STR` is called, not when `BPF_MISC+BPF_LDR` is
  * would it be helpful to be able to distingush between record existing or not, and how that would be done
+ * I need a way better data structure
  * tool to generate mock data to experiment with
  * add stepping debugging support
  * improve the profiling visibility
