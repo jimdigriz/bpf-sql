@@ -39,16 +39,6 @@ void data_init(struct data **G, int ndesc, struct data_desc *desc)
 	if (!*G)
 		ERROR0(EX_OSERR, "calloc(*G)");
 
-	switch (desc[0].t) {
-	case TRIE:
-		(*G)->rR.r.t = calloc(1, sizeof(struct trie));
-		if (!(*G)->rR.r.t)
-			ERROR0(EX_OSERR, "calloc((*G)->rR.r.t)");
-		break;
-	default:
-		ERRORV(EX_SOFTWARE, "unknown data type: %d", desc[0].t);
-	}
-
 	for (int i = 0; i < ndesc; i++)
 		(*G)->wR += desc[i].w;
 
@@ -116,6 +106,11 @@ static struct record *data_fetch(struct data *G)
 	for (int i = 0, o = 0; i < G->nd - 1; i++, o += G->d[i].w) {
 		switch (G->d[i].t) {
 		case TRIE:
+			if (!R->r.t) {
+				R->r.t = calloc(1, sizeof(struct trie));
+				if (!R->r.t)
+					ERROR0(EX_OSERR, "calloc(R->r.t)");
+			}
 			R = trie_fetch(G, R->r.t, &G->R[o], G->d[i].w);
 			break;
 		default:
